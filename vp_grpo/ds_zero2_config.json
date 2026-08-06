@@ -1,0 +1,16 @@
+{
+    "gradient_clipping": 1.0,
+    "zero_optimization": {
+        "stage": 2,
+        "ignore_unused_parameters": true,
+        "allgather_partitions": true,
+        "allgather_bucket_size": 500000000,
+        "overlap_comm": true,
+        "reduce_scatter": true,
+        "reduce_bucket_size": 500000000,
+        "contiguous_gradients": true
+    },
+    "bf16": {
+        "enabled": true
+    }
+}

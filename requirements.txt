@@ -1,0 +1,30 @@
+# VTInstructor — Python dependencies
+#
+# Core deep-learning stack. The pipeline was validated with the versions below;
+# newer patch releases are usually fine, but transformers is pinned because the
+# VP-Adapter injects modules into the Qwen3-VL model internals.
+torch>=2.1
+transformers==4.57.6
+deepspeed>=0.14
+accelerate>=0.30
+
+# Numerics / imaging
+numpy>=1.24
+Pillow>=10.0
+opencv-python>=4.8
+tqdm>=4.66
+
+# Optional: TensorBoard logging during training
+tensorboard>=2.14
+
+# ----------------------------------------------------------------------------
+# NOT installable via pip — install separately following upstream instructions:
+#
+#   * habitat-sim  : trajectory rendering (rendering/, visual_prompt/,
+#                    vp_adapter/render_vp_masks*.py). See
+#                    https://github.com/facebookresearch/habitat-sim
+#   * pycocoevalcap: NLG metric scoring (vp_grpo/grpo_reward.py, metrics/).
+#                    See https://github.com/salaniz/pycocoevalcap
+#
+# Model weights (Qwen3-VL-8B-Instruct) must be downloaded from Hugging Face.
+# ----------------------------------------------------------------------------

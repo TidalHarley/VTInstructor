@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Secrets / API keys
+api0key
+*api*key*
+*.key
+
+# Data, renders, checkpoints, logs (never commit large artifacts)
+data/
+outputs/
+checkpoints/
+*.ckpt
+*.safetensors
+*.pt
+*.pth
+logs/
+*.log
+wandb/
+
+# Rendered frames / media
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.webm
+
+# OS
+.DS_Store

@@ -1,0 +1,37 @@
+# VTInstructor - Stage 3 (VP-Adapter SFT) environment
+# Captured 2026-08-03 from the 8x H200 node that produced
+# checkpoints/nig_vp_adapter_v3.1_sft (465 steps, loss 3.6687 -> 1.2624).
+#
+# Launcher: torch.distributed.run (HF Trainer + DDP). DeepSpeed is NOT used in SFT.
+# Python 3.10.19
+#
+# --- core ---
+torch==2.10.0+cu128
+torchvision==0.25.0+cu128
+torchaudio==2.10.0+cu128
+transformers==4.57.6
+tokenizers==0.22.2
+accelerate==1.5.2
+numpy==1.26.4
+safetensors==0.7.0
+huggingface_hub==0.36.2
+#
+# --- data / metrics ---
+pillow==11.3.0
+opencv-python==4.13.0.92
+opencv-python-headless==4.9.0.80
+pycocoevalcap==1.2
+sentencepiece==0.2.2
+protobuf==6.33.5
+einops==0.8.2
+#
+# --- present in the env but not required by SFT ---
+deepspeed==0.16.9
+flash_attn==2.8.3
+pydantic==2.10.6
+pydantic_core==2.27.2
+msgpack==1.1.2
+ninja==1.13.0
+hjson==3.1.0
+py-cpuinfo==9.0.0
+nvidia-ml-py==13.610.43

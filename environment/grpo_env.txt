@@ -1,0 +1,42 @@
+# VTInstructor - Stage 4 (VP-GRPO) environment
+# Captured 2026-08-03. This reproduces the environment of the original
+# 2026-06 RL runs, which completed 485+ optimizer steps with zero NaN.
+#
+# Launcher: deepspeed.launcher.runner (ZeRO-2, bf16).
+# Python 3.10.19
+#
+# IMPORTANT: deepspeed==0.14.4 is a hard requirement, not a preference.
+# See ENVIRONMENT.md - newer DeepSpeed (0.16.9) makes every trainable
+# parameter non-finite on the first optimizer step in this ZeRO-2 + bf16 +
+# partially-frozen-model configuration.
+#
+# --- core (pinned) ---
+torch==2.7.1
+torchvision==0.22.1
+deepspeed==0.14.4
+transformers==4.57.6
+tokenizers==0.22.2
+accelerate==1.5.2
+numpy==1.26.4
+safetensors==0.8.0
+huggingface_hub==0.36.2
+#
+# --- deepspeed runtime deps ---
+pydantic==2.13.4
+pydantic_core==2.46.4
+msgpack==1.2.1
+ninja==1.13.0
+hjson==3.1.0
+py-cpuinfo==9.0.0
+nvidia-ml-py==13.610.43
+einops==0.8.2
+#
+# --- data / metrics ---
+pillow==12.3.0
+opencv-python-headless==4.11.0.86
+pycocoevalcap==1.2
+sentencepiece==0.2.2
+protobuf==7.35.1
+#
+# --- external, not pip-installable ---
+# Java (OpenJDK 1.8.0_492) is required by the METEOR reward/metric.
