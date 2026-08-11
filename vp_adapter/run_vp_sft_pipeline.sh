@@ -106,7 +106,7 @@ RXRCE_SCORE_MAX_WORDS="${RXRCE_SCORE_MAX_WORDS:-150}"
 # Pre-checks
 # ============================================================================
 
-if [[ ! -x "$PY" ]]; then
+if ! command -v "$PY" >/dev/null 2>&1; then
   echo "[FATAL] Python not found: $PY"
   exit 127
 fi
@@ -204,12 +204,36 @@ if [[ "$EVAL_ONLY" == "1" ]]; then
   SKIP_EVAL=0
 fi
 
-for p in "$MODEL_DIR" "$R2RCE_TRAIN_DATA_DIR" "$RXRCE_TRAIN_DATA_DIR" "$FILTERED_JSON"; do
+# ── Path pre-checks, scoped to the stages that will actually run ──
+# Inference-only users (EVAL_ONLY=1 / SKIP_TRAIN=1) do not need the ~44 GB of
+# training data, so those paths are only required when training.
+REQUIRED_PATHS=("$MODEL_DIR")
+if [[ "$SKIP_TRAIN" != "1" ]]; then
+  REQUIRED_PATHS+=("$R2RCE_TRAIN_DATA_DIR" "$RXRCE_TRAIN_DATA_DIR" "$FILTERED_JSON")
+fi
+if [[ "$SKIP_EVAL" != "1" ]]; then
+  REQUIRED_PATHS+=("$R2RCE_EVAL_DATA_DIR" "$RXRCE_EVAL_DATA_DIR")
+fi
+
+for p in "${REQUIRED_PATHS[@]}"; do
   if [[ ! -e "$p" ]]; then
     echo "[FATAL] Missing path: $p"
     exit 2
   fi
 done
+
+if [[ "$SKIP_TRAIN" == "1" && "$SKIP_EVAL" != "1" ]]; then
+  if [[ -z "${EVAL_CKPT:-}" ]]; then
+    echo "[FATAL] Training is skipped but EVAL_CKPT is not set."
+    echo "        Point it at a checkpoint directory, e.g."
+    echo "        EVAL_CKPT=/path/to/nig_rl_vp_v3.4 bash vp_adapter/run_vp_sft_pipeline.sh"
+    exit 2
+  fi
+  if [[ ! -d "$EVAL_CKPT" ]]; then
+    echo "[FATAL] EVAL_CKPT is not a directory: $EVAL_CKPT"
+    exit 2
+  fi
+fi
 
 mkdir -p "$OUT_DIR" "$LOG_DIR"
 

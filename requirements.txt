@@ -14,6 +14,10 @@ Pillow>=10.0
 opencv-python>=4.8
 tqdm>=4.66
 
+# Quaternion math for VTP projection (visual_prompt/projection.py).
+# Required by Stage 2 (VP overlay + mask rendering); provides `import quaternion`.
+numpy-quaternion>=2023.0
+
 # Optional: TensorBoard logging during training
 tensorboard>=2.14
 

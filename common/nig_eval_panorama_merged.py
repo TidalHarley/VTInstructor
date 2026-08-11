@@ -21,6 +21,8 @@ from PIL import Image
 from tqdm import tqdm
 from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
 
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 from nig_dataset_panorama_merged import (
     build_inference_prompt,
     get_system_prompt,
@@ -437,14 +439,14 @@ def main():
     )
     parser.add_argument(
         "--processor_dir",
-        default="PATH/TO/models_cache/models--Qwen--Qwen3-VL-8B-Instruct/snapshots/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
-        help="Processor 目录"
+        default="",
+        help="Processor 目录（留空则使用 --model_dir）"
     )
 
     # 数据路径
     parser.add_argument(
         "--data_dir",
-        default="PATH/TO/outputs/R2RCE_visual/r2rce_valunseen_visual",
+        default=os.path.join(_REPO_ROOT, "data", "R2RCE_visual", "r2rce_valunseen_visual"),
         help="评测数据目录"
     )
 
@@ -482,22 +484,26 @@ def main():
     # R2R 参考文件
     parser.add_argument(
         "--r2r_val_json",
-        default="PATH/TO/R2R/R2R/data/R2R_val_unseen.json",
-        help="R2R val_unseen JSON 路径"
+        default=os.path.join(_REPO_ROOT, "metrics", "R2R_val_unseen.json"),
+        help="R2R val_unseen JSON 路径（默认使用仓库自带文件）"
     )
     parser.add_argument(
         "--vlnce_val_json_gz",
-        default="PATH/TO/dataset/R2R_VLNCE_v1-3_preprocessed/val_unseen/val_unseen.json.gz",
-        help="VLNCE val_unseen JSON.gz 路径"
+        default="",
+        help="可选的 VLNCE val_unseen JSON.gz，用于补全缺失的 trajectory_id"
     )
 
     args = parser.parse_args()
+
+    if not args.processor_dir:
+        args.processor_dir = args.model_dir
 
     # 自动生成输出文件名
     if not args.out_json:
         import datetime
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        args.out_json = f"PATH/TO/outputs/nig_eval_panorama_merged_visual_{ts}.json"
+        args.out_json = os.path.join(
+            _REPO_ROOT, "outputs", f"nig_eval_panorama_merged_visual_{ts}.json")
 
     print("=" * 60)
     print("Panorama NIG Evaluation With Visual Prompt (Merged-Label Model)")

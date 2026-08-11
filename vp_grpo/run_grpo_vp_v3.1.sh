@@ -77,7 +77,7 @@ RL_NO_REF_MODEL="${RL_NO_REF_MODEL:-0}"
 RL_BATCHED_TRAIN="${RL_BATCHED_TRAIN:-1}"
 
 # ── 检查路径 ──
-if [[ ! -x "$PY" ]]; then
+if ! command -v "$PY" >/dev/null 2>&1; then
   echo "[FATAL] Python not found: $PY"
   exit 127
 fi

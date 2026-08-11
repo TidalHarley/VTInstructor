@@ -198,6 +198,20 @@ def get_vp_trainable_params(
 VP_ENCODER_FILENAME = "vp_encoder.pt"
 VP_ADAPTERS_FILENAME = "vp_adapters.pt"
 
+def _compact_state_dict(state: dict) -> dict:
+    """Give every tensor its own storage before serialising.
+
+    Under DeepSpeed ZeRO the VP parameters are views into one flattened buffer
+    that spans the whole model, and torch.save writes out the entire underlying
+    storage of a view. Cloning is the difference between a ~1 MB adapter file
+    and a ~16 GB one.
+    """
+    return {
+        k: (v.detach().to("cpu").clone() if torch.is_tensor(v) else v)
+        for k, v in state.items()
+    }
+
+
 def save_vp_modules(
     vp_encoder: nn.Module,
     model: nn.Module,
@@ -205,12 +219,15 @@ def save_vp_modules(
 ):
     """Save VP encoder and adapter weights alongside the main checkpoint."""
     os.makedirs(save_dir, exist_ok=True)
-    torch.save(vp_encoder.state_dict(), os.path.join(save_dir, VP_ENCODER_FILENAME))
+    torch.save(
+        _compact_state_dict(vp_encoder.state_dict()),
+        os.path.join(save_dir, VP_ENCODER_FILENAME),
+    )
 
     visual = _unwrap(model).model.visual
     if hasattr(visual, "_vp_adapters"):
         torch.save(
-            visual._vp_adapters.state_dict(),
+            _compact_state_dict(visual._vp_adapters.state_dict()),
             os.path.join(save_dir, VP_ADAPTERS_FILENAME),
         )
 

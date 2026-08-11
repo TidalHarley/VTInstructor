@@ -4,7 +4,7 @@
     "total": 10819,
     "kept": 9264,
     "removed": 1555,
-    "source": "/home/ubuntu/navigation/VT-Instructor/step0_render/scored_instructions.json"
+    "source": "scored_instructions.json (produced by rendering/run_gpt_filter_r2rce_train.sh)"
   },
   "episodes": {
     "1": {

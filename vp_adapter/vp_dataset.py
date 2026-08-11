@@ -36,6 +36,28 @@ from nig_dataset_panorama_merged import (
 )
 
 
+_ZERO_MASK_NOTIFIED: set = set()
+
+
+def notify_missing_vp_mask(context: str, episode_dir: str,
+                           level: str = "WARN", hint: str = "") -> None:
+    """Report (once per context) that a frame fell back to an all-zero VP mask.
+
+    Running without masks is never fatal — the model simply generates without
+    the visual trajectory prompt. It is a mistake during training, where it
+    means Stage 2 was skipped, but a legitimate mode at inference time, so the
+    caller picks the severity.
+    """
+    if context in _ZERO_MASK_NOTIFIED:
+        return
+    _ZERO_MASK_NOTIFIED.add(context)
+    message = (f"[VP][{level}] {context}: no vp_masks for these frames, using "
+               f"all-zero masks. First occurrence: {episode_dir}.")
+    if hint:
+        message += f" {hint}"
+    print(message, flush=True)
+
+
 def _load_vp_mask(mask_path: str, episode_dir: str) -> Optional[np.ndarray]:
     """Load a VP semantic mask, return (H, W, 3) float32 in [0, 1].
 
@@ -119,8 +141,17 @@ class VPDataset(Dataset):
             s = safe_load_json(p)
             if s and s.get("vp_masks"):
                 mask_count += 1
+        probed = min(100, len(self.sample_files))
         print(f"[VPDataset:{dataset_type}] {len(self.sample_files)} samples "
-              f"(mask coverage in first 100: {mask_count}/{min(100, len(self.sample_files))})")
+              f"(mask coverage in first 100: {mask_count}/{probed})")
+        if probed > 0 and mask_count == 0:
+            print(
+                f"[VPDataset:{dataset_type}][WARN] none of the first {probed} episodes "
+                f"declares vp_masks in sample.json. Training would run with the "
+                f"VP-Adapter fully disabled. Did you run Stage 2 "
+                f"(vp_adapter/render_vp_masks_from_samples.py) on {root_dir}?",
+                flush=True,
+            )
 
     def __len__(self):
         return len(self.sample_files)
@@ -173,6 +204,10 @@ class VPDataset(Dataset):
                     vp_masks.append(m)
                     continue
             # Fallback: all-zero mask matching frame size
+            notify_missing_vp_mask(
+                f"VPDataset:{self.dataset_type}", episode_dir, level="WARN",
+                hint="Training this way leaves the VP-Adapter with no signal — "
+                     "run vp_adapter/render_vp_masks_from_samples.py on this split.")
             img_arr = np.array(images[i])
             h, w = img_arr.shape[:2]
             vp_masks.append(np.zeros((h, w, 3), dtype=np.float32))

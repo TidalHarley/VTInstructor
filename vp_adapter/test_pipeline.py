@@ -27,16 +27,14 @@ if _VP_DIR not in sys.path:
 
 from vp_config import VPAdapterConfig
 from vp_encoder import VPEncoder, build_vp_encoder
-from vp_gated_adapter import VPSpatialAdapter, build_vp_adapters
+from vp_gated_adapter import VPSpatialAdapter, build_vp_adapters, _GATE_INIT
 from vp_model_wrapper import (
     attach_vp_adapter, set_vp_features, clear_vp_features,
     save_vp_modules, load_vp_modules, print_vp_summary,
+    VP_ADAPTERS_FILENAME,
 )
 
-MODEL_DIR = (
-    "PATH/TO/models_cache/models--Qwen--Qwen3-VL-8B-Instruct"
-    "/snapshots/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"
-)
+MODEL_DIR = os.environ.get("MODEL_DIR", "/path/to/Qwen3-VL-8B-Instruct")
 
 
 def test_vp_encoder():
@@ -128,19 +126,27 @@ def test_model_wrapper(quick=False):
     visual = model.model.visual
     assert hasattr(visual, "_vp_adapters"), "Adapters not registered"
     assert hasattr(visual, "_vp_adapter_layer_set"), "Layer set not registered"
-    assert visual._vp_adapter_layer_set == {7, 15, 23}
+    assert visual._vp_adapter_layer_set == set(cfg.adapter_layers), (
+        f"Expected adapters at {set(cfg.adapter_layers)}, "
+        f"got {visual._vp_adapter_layer_set}")
 
     # Verify ViT backbone is frozen
-    frozen_count = sum(1 for p in visual.parameters()
-                       if not p.requires_grad and "_vp_adapters" not in "")
+    frozen_count = sum(1 for p in visual.parameters() if not p.requires_grad)
     print(f"  [OK] Adapters registered at layers: {visual._vp_adapter_layer_set}")
     print(f"  [OK] ViT frozen params: {frozen_count}")
 
-    # Verify gate values
+    # Gate is a per-dimension vector initialised to _GATE_INIT, so injection
+    # starts near-identity rather than exactly zero.
     for name, adapter in visual._vp_adapters.items():
-        g = adapter.gate.item()
-        assert abs(g) < 1e-6, f"Gate at layer {name} not zero: {g}"
-        print(f"  [OK] Gate at layer {name}: {g:.6f}")
+        g = adapter.gate.detach().float()
+        assert g.numel() == adapter.vp_proj.out_features, (
+            f"Gate at layer {name} should be a per-dimension vector")
+        # attach_vp_adapter casts the adapter to the ViT dtype, so a bf16 gate
+        # lands a little off the nominal init value.
+        assert torch.allclose(g, torch.full_like(g, _GATE_INIT), rtol=1e-2, atol=1e-5), (
+            f"Gate at layer {name} not at init: mean {g.mean():.6f}")
+        print(f"  [OK] Gate at layer {name}: shape {tuple(g.shape)}, "
+              f"init {g.mean():.6f}")
 
     print_vp_summary(vp_encoder, model)
 
@@ -155,9 +161,17 @@ def test_model_wrapper(quick=False):
             adapter.gate.fill_(0.5)
     load_vp_modules(vp_encoder, model, tmp_dir)
     for name, adapter in visual._vp_adapters.items():
-        g = adapter.gate.item()
-        assert abs(g) < 1e-6, f"Gate not restored: {g}"
-    print(f"  [OK] Save/load round-trip passed")
+        g = adapter.gate.detach().float()
+        assert torch.allclose(g, torch.full_like(g, _GATE_INIT), rtol=1e-2, atol=1e-5), (
+            f"Gate at layer {name} not restored: mean {g.mean():.6f}")
+
+    # The saved file must not drag along a shared storage (see _compact_state_dict)
+    adp_bytes = os.path.getsize(os.path.join(tmp_dir, VP_ADAPTERS_FILENAME))
+    assert adp_bytes < 50 * 1024 * 1024, (
+        f"vp_adapters.pt is {adp_bytes / 1e6:.1f} MB; expected ~1 MB. "
+        f"Tensors were serialised together with a shared backing storage.")
+    print(f"  [OK] Save/load round-trip passed "
+          f"(vp_adapters.pt = {adp_bytes / 1e6:.2f} MB)")
 
     return True
 
@@ -234,7 +248,10 @@ def test_full_forward(quick=False):
     for name, adapter in visual._vp_adapters.items():
         g = adapter.gate.grad
         assert g is not None, f"No gradient for gate at layer {name}"
-        print(f"  [OK] Gate gradient at layer {name}: {g.item():.6e}")
+        assert torch.isfinite(g).all(), f"Non-finite gate gradient at layer {name}"
+        assert g.abs().max() > 0, f"Gate gradient at layer {name} is all zero"
+        print(f"  [OK] Gate gradient at layer {name}: "
+              f"|g|_mean {g.abs().float().mean():.6e}, |g|_max {g.abs().float().max():.6e}")
 
     print(f"  [OK] Full forward + backward pass complete")
     return True

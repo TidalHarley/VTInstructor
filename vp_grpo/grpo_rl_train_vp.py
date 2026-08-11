@@ -84,6 +84,27 @@ from vp_model_wrapper import (
 # VP Mask loading (adapted from vp_dataset.py)
 # ============================================================================
 
+_ZERO_MASK_WARNED: set = set()
+
+
+def notify_missing_vp_mask(context: str, episode_dir: str) -> None:
+    """Warn (once per context) that a frame fell back to an all-zero VP mask.
+
+    Under gate-only GRPO the VP-Adapter gate is the only thing being trained,
+    so silently zeroing its input would leave nothing to optimise.
+    """
+    if context in _ZERO_MASK_WARNED:
+        return
+    _ZERO_MASK_WARNED.add(context)
+    print(
+        f"[VP][WARN] {context}: missing vp_masks, falling back to all-zero masks "
+        f"— the VP-Adapter receives no signal for these frames. "
+        f"First occurrence: {episode_dir}. "
+        f"Run vp_adapter/render_vp_masks_from_samples.py on this split first.",
+        flush=True,
+    )
+
+
 def _load_vp_mask(mask_path: str, episode_dir: str) -> Optional[np.ndarray]:
     """Load a VP semantic mask, return (H, W, 3) float32 in [0, 1]."""
     if not mask_path:
@@ -201,6 +222,20 @@ class RLVPDataset(Dataset):
         print(f"[RLVPDataset] {len(self.sample_files)} samples "
               f"(R2RCE={r2rce_count}, RXRCE={rxrce_count})")
 
+        probed = min(100, len(self.sample_files))
+        with_masks = sum(
+            1 for p in self.sample_files[:probed]
+            if (safe_load_json(p) or {}).get("vp_masks")
+        )
+        print(f"[RLVPDataset] mask coverage in first {probed}: {with_masks}/{probed}")
+        if probed > 0 and with_masks == 0:
+            print(
+                "[RLVPDataset][WARN] none of the probed episodes declares vp_masks. "
+                "Gate-only GRPO would optimise a gate that receives no input. "
+                "Did you run Stage 2 (vp_adapter/render_vp_masks_from_samples.py)?",
+                flush=True,
+            )
+
     def __len__(self) -> int:
         return len(self.sample_files)
 
@@ -255,6 +290,10 @@ class RLVPDataset(Dataset):
             if i < len(vp_mask_paths) and vp_mask_paths[i]:
                 mask = _load_vp_mask(vp_mask_paths[i], episode_dir)
             if mask is None:
+                notify_missing_vp_mask(
+                    f"RLVPDataset:{self.sample_dataset_type.get(sample_path, 'r2rce')}",
+                    episode_dir,
+                )
                 img_arr = np.array(images[i])
                 h, w = img_arr.shape[:2]
                 mask = np.zeros((h, w, 3), dtype=np.float32)

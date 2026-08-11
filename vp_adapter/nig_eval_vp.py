@@ -39,7 +39,7 @@ for _src in _SRC_CANDIDATES:
 
 from vp_config import VPAdapterConfig
 from vp_model_wrapper import attach_vp_adapter, load_vp_modules, set_vp_features, clear_vp_features
-from vp_dataset import _load_vp_mask
+from vp_dataset import _load_vp_mask, notify_missing_vp_mask
 
 from nig_dataset_panorama_merged import (
     build_inference_prompt,
@@ -104,7 +104,10 @@ def build_prompt_from_sample(sample: dict, max_frames: int):
         p = fp if os.path.exists(fp) else os.path.join(episode_dir, os.path.basename(fp))
         images.append(Image.open(p).convert("RGB"))
 
-    vp_mask_paths = [] if _os.environ.get("EVAL_ZERO_VP", "0") == "1" else sample.get("vp_masks", [])
+    # EVAL_ZERO_VP=1 is the deliberate "no visual prompt" ablation, so zeroing
+    # masks is expected there and must not be reported as a data problem.
+    zero_vp_ablation = _os.environ.get("EVAL_ZERO_VP", "0") == "1"
+    vp_mask_paths = [] if zero_vp_ablation else sample.get("vp_masks", [])
     vp_masks = []
     for i in range(num_frames):
         if i < len(vp_mask_paths) and vp_mask_paths[i]:
@@ -112,6 +115,12 @@ def build_prompt_from_sample(sample: dict, max_frames: int):
             if m is not None:
                 vp_masks.append(m)
                 continue
+        if not zero_vp_ablation:
+            notify_missing_vp_mask(
+                "nig_eval_vp", episode_dir, level="INFO",
+                hint="Evaluating without visual trajectory prompting; this is a "
+                     "supported mode, but the scores describe the no-VTP setting "
+                     "rather than the full method.")
         img_arr = np.array(images[i])
         h, w = img_arr.shape[:2]
         vp_masks.append(np.zeros((h, w, 3), dtype=np.float32))
@@ -350,9 +359,9 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate NIG with VP-Adapter")
 
     parser.add_argument("--model_dir", required=True)
-    parser.add_argument("--processor_dir", default=(
-        "PATH/TO/models_cache/models--Qwen--Qwen3-VL-8B-Instruct"
-        "/snapshots/0c351dd01ed87e9c1b53cbc748cba10e6187ff3b"))
+    parser.add_argument("--processor_dir", default="",
+                        help="Qwen3-VL processor; defaults to --model_dir, which "
+                             "carries one when saved by the SFT trainer")
     parser.add_argument("--data_dir", required=True)
     parser.add_argument("--out_json", default="")
 
@@ -368,9 +377,11 @@ def main():
                         default="r2r_multiref")
 
     parser.add_argument("--r2r_val_json",
-                        default="PATH/TO/R2R/R2R/data/R2R_val_unseen.json")
-    parser.add_argument("--vlnce_val_json_gz",
-                        default="PATH/TO/dataset/R2R_VLNCE_v1-3_preprocessed/val_unseen/val_unseen.json.gz")
+                        default=os.path.join(_VP_DIR, "..", "metrics", "R2R_val_unseen.json"),
+                        help="Multi-reference lookup; the shipped file is used by default")
+    parser.add_argument("--vlnce_val_json_gz", default="",
+                        help="Optional VLN-CE val_unseen split, used to recover "
+                             "trajectory_id for episodes that lack one")
 
     # VP-Adapter config (must match training — v2.0 defaults)
     parser.add_argument("--vp_dim", type=int, default=384)
@@ -379,10 +390,14 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.processor_dir:
+        args.processor_dir = args.model_dir
+
     if not args.out_json:
         import datetime
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        args.out_json = f"PATH/TO/outputs/nig_eval_vp_{ts}.json"
+        args.out_json = os.path.join(
+            _VP_DIR, "..", "outputs", f"nig_eval_vp_{ts}.json")
 
     print("=" * 60)
     print("NIG Evaluation with VP-Adapter")

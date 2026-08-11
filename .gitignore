@@ -34,5 +34,8 @@ wandb/
 *.mp4
 *.webm
 
+# ...except figures the README embeds
+!vt-instructor.png
+
 # OS
 .DS_Store
