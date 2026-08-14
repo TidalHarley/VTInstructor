@@ -16,6 +16,7 @@ It covers:
 - **VP-GRPO** gate-only RL refinement
 - **Evaluation** with BLEU / CIDEr / METEOR / ROUGE-L
 - **Inference for data augmentation**, with VTP rendering optional
+- But, DPC code in EDTC section was not available now.
 
 ```
 Stage 1  Rendering      →  clean panorama keyframes (Habitat)
