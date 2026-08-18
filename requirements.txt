@@ -24,10 +24,9 @@ tensorboard>=2.14
 # ----------------------------------------------------------------------------
 # NOT installable via pip — install separately following upstream instructions:
 #
-#   * habitat-sim  : trajectory rendering (rendering/, visual_prompt/,
-#                    vp_adapter/render_vp_masks*.py). See
+#   * habitat-sim  : trajectory rendering (preprocess/rendering/, visual_prompt/). See
 #                    https://github.com/facebookresearch/habitat-sim
-#   * pycocoevalcap: NLG metric scoring (vp_grpo/grpo_reward.py, metrics/).
+#   * pycocoevalcap: NLG metric scoring (train/reward.py, metrics/evaluate.py).
 #                    See https://github.com/salaniz/pycocoevalcap
 #
 # Model weights (Qwen3-VL-8B-Instruct) must be downloaded from Hugging Face.

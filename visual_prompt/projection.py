@@ -13,8 +13,6 @@ import numpy as np
 import quaternion as quat_mod
 
 
-# ────────────────────────── 四元数 → 旋转矩阵 ──────────────────────────
-
 def quat_to_rotmat(q) -> np.ndarray:
     """numpy-quaternion / 四元数 → 3×3 旋转矩阵 (local → world)。"""
     if isinstance(q, quat_mod.quaternion):
@@ -36,8 +34,6 @@ def quat_to_rotmat(q) -> np.ndarray:
     )
 
 
-# ────────────────────────── 内参 ──────────────────────────
-
 def compute_intrinsics(
     hfov_deg: float, width: int, height: int
 ) -> Tuple[float, float, float, float]:
@@ -49,8 +45,6 @@ def compute_intrinsics(
     cy = height / 2.0
     return fx, fy, cx, cy
 
-
-# ────────────────────────── 批量投影 ──────────────────────────
 
 def project_points(
     pts_world: np.ndarray,
@@ -85,15 +79,13 @@ def project_points(
     z = -pts_cam[:, 2]  # 相机坐标系中的z坐标，负号的原因是相机坐标系中的z轴指向屏幕外，因此正前方是-z方向
     in_front = z > 1e-4  # 判断点是否在相机前方，还是上面坐标系的缘故
 
-    z_safe = np.where(in_front, z, 1.0)  # 如果点在相机前方，则使用z坐标，否则使用1.0
-    u = fx * (pts_cam[:, 0] / z_safe) + cx  # 计算像素坐标
-    v = -fy * (pts_cam[:, 1] / z_safe) + cy  # 计算像素坐标
+    z_safe = np.where(in_front, z, 1.0)
+    u = fx * (pts_cam[:, 0] / z_safe) + cx
+    v = -fy * (pts_cam[:, 1] / z_safe) + cy
 
-    uv = np.stack([u, v], axis=-1)  # 将像素坐标组合成一个二维数组
+    uv = np.stack([u, v], axis=-1)
     return uv, z, in_front
 
-
-# ────────────────────────── 遮挡检测 ──────────────────────────
 
 def check_visibility(
     uv: np.ndarray,
@@ -116,17 +108,13 @@ def check_visibility(
     v_int = np.round(uv[:, 1]).astype(np.int64)
 
     in_bounds = (u_int >= 0) & (u_int < width) & (v_int >= 0) & (v_int < height)
-    # 落在图像的范围内：像素坐标在[0, width)和[0, height)之间
     candidate = in_front & in_bounds
-    # in_front: 判断点是否在相机前方
-    # in_bounds: 判断点是否在图像范围内
 
     idx = np.where(candidate)[0]
     if idx.size == 0:
         return vis
 
     d_buf = depth_buffer[v_int[idx], u_int[idx]]
-    # depth_buffer: 深度缓冲区，存储每个像素的深度值，即从相机出发到距离其最近的物体的距离
     valid_depth = (d_buf > 0) & np.isfinite(d_buf) # 一些corner case比如说渲染出现漏的地方可能 distance=inf
     not_occluded = depths[idx] <= (d_buf + tau)
     vis[idx] = valid_depth & not_occluded

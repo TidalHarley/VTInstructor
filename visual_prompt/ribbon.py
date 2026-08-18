@@ -14,8 +14,6 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 
-# ────────────────────────── 轨迹提取 ──────────────────────────
-
 def get_current_event_actions(
     event_idx: int,
     current_pos: np.ndarray,
@@ -67,8 +65,6 @@ def determine_turn_direction(
             return "right"
     return "straight"
 
-
-# ────────────────────────── polyline 工具 ──────────────────────────
 
 def _polyline_length(pts) -> float:
     total = 0.0
@@ -134,8 +130,6 @@ def smooth_polyline(pts: np.ndarray, sigma_n: float) -> np.ndarray:
     smoothed[-1] = pts[-1]
     return smoothed
 
-
-# ────────────────────────── Ribbon 顶点 ──────────────────────────
 
 def build_ribbon_vertices(
     center: np.ndarray,

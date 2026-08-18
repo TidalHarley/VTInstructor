@@ -1,0 +1,22 @@
+[
+  {
+    "trajectory_id": 15,
+    "episode_id": 1,
+    "prediction": "Exit the bedroom and turn left. Walk straight past the gray couch and stop near the rug.",
+    "references": [
+      "Exit the bedroom and turn left. Walk straight passing the gray couch and stop near the rug.",
+      "Walk out of the bedroom through the open door into the hallway. Turn the corner and walk into the dining area. Pass the dining table and walk into the living room area towards the television. Stop near the chair and open sliding doors to outside.",
+      "Go out of the room you're in. Turn left. Go past the dining room and into the living room. Wait right by the coffee table."
+    ]
+  },
+  {
+    "trajectory_id": 22,
+    "episode_id": 4,
+    "prediction": "Walk down the hallway, turn right at the stairs, and stop next to the wooden bench.",
+    "references": [
+      "Walk down the hallway and turn right at the stairs. Stop next to the wooden bench.",
+      "Go forward through the corridor, take a right before the staircase, and wait by the bench.",
+      "Continue down the hall, turn right, and stop beside the bench near the stairs."
+    ]
+  }
+]

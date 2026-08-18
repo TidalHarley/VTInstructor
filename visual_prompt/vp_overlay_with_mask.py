@@ -1,20 +1,17 @@
 """
-Visual Prompt 覆盖渲染 + 0/1 语义 mask 提取。
+Paint Visual Trajectory Prompts onto a panorama and emit a 3-channel 0/1 mask
+for VTMod (VPEncoder):
 
-ribbon / arrow / endpoint 的绘制风格与 `overlay.py` 完全一致（细线描边版），
-在此基础上额外输出一份与 RGB 像素对齐的 3 通道二值 mask，供 VTMod (VPEncoder) 使用：
+    C0 = ribbon    (path: current event + lookahead + ground link)
+    C1 = arrow     (turn arc / forward arrow)
+    C2 = endpoint  (goal marker)
 
-    C0 = ribbon    (轨迹带：当前段 + lookahead 段 + 底部连接 + 前向短线)
-    C1 = arrow     (转向弧箭头 / 前进箭头)
-    C2 = endpoint  (终点旗标)
+Masks are binary (no antialiasing), shape (H, W*n_views, 3) float32.
 
-mask 取值为 0/1（无抗锯齿，保持二值），shape = (H, W*n_views, 3) float32。
-
-核心入口：
+Entry:
     overlay_panorama_with_mask(...) -> (overlaid_rgb, modes, pano_mask)
 
-与 `overlay.overlay_panorama` 同签名，便于 `render_vp_masks.py` 直接调用。
-该模块自包含（只依赖 projection.py）。
+Depends only on projection.py. Called by render_masks.py.
 """
 from __future__ import annotations
 
@@ -39,7 +36,6 @@ except ImportError:  # pragma: no cover
         quat_to_rotmat,
     )
 
-# ────────────────────────── 颜色 & 参数（与 overlay.py 对齐） ──────────────────────────
 
 # 注意：当前图像是 RGB 顺序，颜色常量也按 RGB 给出
 # ribbon 沿弧长渐变：近端深蓝(RIBBON_NEAR_COLOR) → 远端深绿(RIBBON_FAR_COLOR)
@@ -70,13 +66,10 @@ PATH_ELEVATION = 0.02
 # ribbon mask 线宽（覆盖描边外轮廓）
 RIBBON_MASK_THICK = RIBBON_THICK + RIBBON_BORDER_W * 2
 
-# mask 通道索引
 CH_RIBBON = 0
 CH_ARROW = 1
 CH_ENDPOINT = 2
 
-
-# ────────────────────────── alpha 合成 ──────────────────────────
 
 def _composite(base: np.ndarray, overlay: np.ndarray, alpha: float) -> np.ndarray:
     mask = overlay.astype(np.int32).sum(axis=2) > 0
@@ -91,8 +84,6 @@ def _paint_mask_polylines(ch: np.ndarray, pts: np.ndarray, thick: int) -> None:
         return
     cv2.polylines(ch, [pts.astype(np.int32)], False, 1, thick, cv2.LINE_8)
 
-
-# ────────────────────────── 几何工具（移植自 overlay.py） ──────────────────────────
 
 def _densify_uv(points_uv: np.ndarray, step_px: float = 2.0) -> np.ndarray:
     """仅做线性加密，不做全局平滑（直线段保持原走向）。"""
@@ -285,8 +276,6 @@ def _build_forward_probe_positions(event_idx, current_pos, step_states, event_en
     return end_pos, heading
 
 
-# ────────────────────────── Ribbon 绘制（细线描边 + 二值 mask） ──────────────────────────
-
 def _lerp_color(c0, c1, t: float):
     t = float(np.clip(t, 0.0, 1.0))
     return tuple(int(round(c0[k] * (1.0 - t) + c1[k] * t)) for k in range(3))
@@ -390,8 +379,6 @@ def _draw_short_forward_fallback(rgb: np.ndarray, ch_ribbon: np.ndarray) -> Tupl
     cv2.line(ch_ribbon, (x0, y0), (x1, y1), 1, RIBBON_MASK_THICK, cv2.LINE_8)
     return _composite(rgb, overlay, RIBBON_ALPHA), True
 
-
-# ────────────────────────── 箭头 / 终点 ──────────────────────────
 
 def _draw_turn_arrow(rgb: np.ndarray, ch_arrow: np.ndarray,
                      turn_dir: str, turn_deg: int) -> np.ndarray:
@@ -500,8 +487,6 @@ def _maybe_endpoint(rgb, ch_endpoint, depth_buf, cam_pos, R_cam, fx, fy, cx, cy,
     return rgb
 
 
-# ────────────────────────── 中间子视图（彩色 + mask） ──────────────────────────
-
 def process_center_subview_with_mask(
     rgb: np.ndarray,
     depth_buf: np.ndarray,
@@ -590,8 +575,6 @@ def process_center_subview_with_mask(
                              fx, fy, cx, cy, goal_pos, is_near_end)
     return result, _stack(), "none"
 
-
-# ────────────────────────── 全景拼接（RGB + mask） ──────────────────────────
 
 def overlay_panorama_with_mask(
     subview_rgbs: List[np.ndarray],

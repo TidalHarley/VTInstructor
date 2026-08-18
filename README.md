@@ -1,6 +1,12 @@
 # [ACMMM 2026] VTInstructor: Visual Trajectory Prompting for Navigation Instruction Generation in Continuous Environments
 
 <p align="center">
+  <a href="https://arxiv.org/abs/2608.15284"><img src="https://img.shields.io/badge/arXiv-2608.15284-b31b1b.svg" alt="arXiv"></a>
+  <a href="https://huggingface.co/TidalYang/VTInstructor-8b"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-VTInstructor--8B-ffc107.svg" alt="Hugging Face"></a>
+  <img src="https://img.shields.io/badge/%F0%9F%8C%90%20Project-Coming%20Soon-lightgrey.svg" alt="Project website coming soon">
+</p>
+
+<p align="center">
   <img src="vt-instructor.png" alt="VTInstructor overview" width="90%"/>
 </p>
 
@@ -11,18 +17,20 @@ This repository provides the full open-source pipeline for **VTInstructor**: gen
 It covers:
 
 - **Rendering** Habitat egocentric panoramas along VLN-CE trajectories
+- **Instruction filtering** (optional; a keep-list for SFT / GRPO is shipped)
 - **Visual Trajectory Prompt (VTP)** overlays and 3-channel semantic masks (ribbon / arrow / endpoint)
 - **VP-Adapter SFT** on Qwen3-VL-8B-Instruct
 - **VP-GRPO** gate-only RL refinement
-- **Evaluation** with BLEU / CIDEr / METEOR / ROUGE-L
+- **Evaluation**: inference writes `prediction` + `references`; `metrics/evaluate.py` scores BLEU / CIDEr / METEOR / ROUGE-L / SPICE
 - **Inference for data augmentation**, with VTP rendering optional
 - But, DPC code in EDTC section was not available now.
 
 ```
-Stage 1  Rendering      →  clean panorama keyframes (Habitat)
+Stage 1  Preprocess     →  Habitat panoramas  +  optional instruction filter
 Stage 2  VP masks       →  overlay frames + 3-channel semantic masks
 Stage 3  VP-Adapter SFT →  supervised fine-tuning
 Stage 4  VP-GRPO        →  RL refinement (gate-only)
+Eval     infer + score  →  eval/infer.py → metrics/evaluate.py
 Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 ```
 
@@ -30,32 +38,47 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 
 - **The first VLN instruction generation framework for continuous environments.** VTInstructor generates instructions from ego-centric RGB trajectories paired with action sequences; the model itself receives only RGB frames as visual input, without navigation graphs, pre-built maps, or scene reconstruction.
 - **A visual trajectory prompting framework for explicit spatial grounding.** We convert implicit trajectory geometry in dense RGB streams into explicit spatial cues through EDTC for navigation-critical keyframe selection, VTP for path/turn/goal prompting on these anchors, VTMod for trajectory-aware visual encoding, and VT-GRPO for reward-driven calibration of spatial signal injection.
-- **State-of-the-art performance with practical utility.** VTInstructor achieves state-of-the-art results on the R2R-CE and RxR-CE Val Unseen benchmarks, surpassing the strongest baseline by +0.357 and +0.109 CIDEr, respectively, improving frozen-follower success by 14.7 percentage points, and delivering +3 SR-point data augmentation gains on both benchmarks.
-- **Fully open-sourced codebase.** All code for rendering, VTP construction, VP-Adapter SFT, VP-GRPO, and evaluation is released in this repository.
+- **State-of-the-art performance with practical utility.** VTInstructor achieves state-of-the-art results on the R2R-CE and RxR-CE Val Unseen benchmarks, surpassing the strongest baseline by +0.109 and +0.357 CIDEr, respectively, improving frozen-follower success by 14.7 percentage points, and delivering +3 SR-point data augmentation gains on both benchmarks.
+- **Fully open-sourced codebase.** All code for rendering, VTP construction, VP-Adapter SFT, VP-GRPO, and evaluation is released in this repository, only DPC in EDTC section is not available yet.
 
 ## Repository layout
 
 ```
 VTInstructor/
-├── rendering/         # Stage 1: Habitat keyframes + instruction filter
-│                      #   ships filtered_ult_gt6.json (9,264 R2R-CE train eps)
-├── visual_prompt/     # VTP geometry / overlay library (used by Stage 2)
-├── vp_adapter/        # Stage 2 masks + Stage 3 SFT + eval + generation
-│   ├── render_vp_masks_from_samples.py   # ★ Stage 2 entry
-│   ├── train_sft_with_vp_adapter.py      # ★ Stage 3 entry
-│   ├── nig_eval_vp.py
-│   ├── generate_instructions.py          # ★ inference for data augmentation
-│   ├── run_generate_instructions.sh
-│   └── run_vp_sft_pipeline.sh
-├── vp_grpo/           # Stage 4 VP-GRPO
-│   ├── grpo_rl_train_vp.py               # ★ Stage 4 entry
-│   ├── run_grpo_vp_v3.1.sh, eval_vp_v3.1.sh
-│   └── ds_zero2_config.json
-├── common/            # Shared dataset / eval helpers
-├── metrics/           # Scoring + R2R_val_unseen.json (613 traj × 3 refs)
-├── environment/       # Exact SFT / GRPO pip freezes
-├── ENVIRONMENT.md     # Two-env setup; DeepSpeed 0.14.4 pin
-├── scripts/           # Example launcher
+├── preprocess/                 # Habitat panoramas + optional instruction filter
+│   ├── rendering/              # ★ Stage 1a: R2R-CE / RxR-CE keyframes
+│   └── filtering/              # ★ Stage 1b: score + keep-list (ships r2rce_train_filtered.json)
+├── visual_prompt/              # ★ Stage 2: VTP overlay + 3-channel masks
+│   └── render_masks.py
+├── vtmod/                      # VTMod: encoder / adapter / wrapper / VP dataset
+│   ├── config.py
+│   ├── encoder.py
+│   ├── adapter.py
+│   ├── wrapper.py              # also exports generate_with_vp (shared by eval + generate)
+│   ├── dataset.py
+│   └── test_modules.py
+├── train/                      # Stage 3 SFT + Stage 4 VP-GRPO
+│   ├── sft.py                  # ★ Stage 3 entry
+│   ├── run_sft.sh
+│   ├── grpo.py                 # ★ Stage 4 entry
+│   ├── run_grpo.sh
+│   ├── reward.py
+│   └── ds_zero2.json
+├── eval/                       # Benchmark inference (then score with metrics/)
+│   ├── infer.py                # writes prediction + references JSON
+│   └── run_eval.sh             # infer → metrics/evaluate.py
+├── generate/                   # Data augmentation only (not scored)
+│   ├── generate_instructions.py
+│   └── run_generate.sh
+├── common/                     # Shared prompts, action grouping, panorama dataset
+│   └── dataset.py
+├── metrics/                    # NLG scoring only — no inference
+│   ├── evaluate.py
+│   ├── pred_example.json       # input schema for evaluate.py
+│   └── R2R_val_unseen.json     # 613 traj × 3 human refs
+├── environment/                # Exact SFT / GRPO pip freezes
+├── ENVIRONMENT.md              # Two-env setup; DeepSpeed 0.14.4 pin
+├── run_pipeline.sh             # Optional: run stages 1–4 in order
 └── requirements.txt
 ```
 
@@ -63,8 +86,9 @@ VTInstructor/
 
 | File | Role |
 |------|------|
-| `rendering/filtered_ult_gt6.json` | R2R-CE train filter for SFT / GRPO |
+| `preprocess/filtering/r2rce_train_filtered.json` | R2R-CE train keep-list for SFT / GRPO |
 | `metrics/R2R_val_unseen.json` | Eval multi-references |
+| `metrics/pred_example.json` | Example input for `metrics/evaluate.py` |
 
 Checkpoints are not in git; point `SFT_CKPT` / `EVAL_CKPT` at your local weights.
 
@@ -72,20 +96,18 @@ Checkpoints are not in git; point `SFT_CKPT` / `EVAL_CKPT` at your local weights
 
 ### Prerequisites
 
-| Need | Stages |
-|------|--------|
-| Matterport3D scenes (`.glb` + `.navmesh`) | 1–2 |
-| [habitat-sim](https://github.com/facebookresearch/habitat-sim) | 1–2 |
-| Qwen3-VL-8B-Instruct (local HF snapshot) | 3–5 / eval |
-| [pycocoevalcap](https://github.com/salaniz/pycocoevalcap) + JRE | GRPO reward + scoring |
-| Envs from `environment/sft_env.txt` and `environment/grpo_env.txt` | 3 / 4 |
-
-SFT and GRPO use **separate** Python envs. GRPO needs DeepSpeed **0.14.4** exactly — see [`ENVIRONMENT.md`](ENVIRONMENT.md).
+| Resource | Download & why it is required |
+|----------|-------------------------------|
+| Matterport3D scenes | [Matterport3D](https://niessner.github.io/Matterport/) (`.glb` + `.navmesh`). Habitat replays VLN-CE trajectories in these meshes when rendering panoramas (`preprocess/rendering`) and when painting VTP overlays / masks (`visual_prompt`). |
+| habitat-sim | [facebookresearch/habitat-sim](https://github.com/facebookresearch/habitat-sim). The simulator that steps through each episode and dumps egocentric RGB (and, for VTP, pose + depth). Needed only for data preparation, not for training or inference from already-rendered splits. |
+| Qwen3-VL-8B-Instruct | [Qwen/Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct). Backbone for SFT, VP-GRPO, evaluation, and instruction generation. Keep a local snapshot and point `MODEL_DIR` at it. Released weights: [TidalYang/VTInstructor-8b](https://huggingface.co/TidalYang/VTInstructor-8b). |
+| pycocoevalcap + JRE | [salaniz/pycocoevalcap](https://github.com/salaniz/pycocoevalcap) and a Java runtime. BLEU / METEOR / ROUGE-L / CIDEr / SPICE for GRPO rewards (`train/reward.py`) and for official scoring (`metrics/evaluate.py`). |
+| Python environments | Freeze files in [`environment/`](environment/) and setup notes in [`ENVIRONMENT.md`](ENVIRONMENT.md). SFT and GRPO use **separate** envs; GRPO requires DeepSpeed **0.14.4** exactly. |
 
 Before the first run you can check the VP-Adapter wiring — encoder shapes, adapter registration, save/load round-trip, and gate gradient flow — against your local backbone:
 
 ```bash
-MODEL_DIR=/path/to/Qwen3-VL-8B-Instruct python vp_adapter/test_pipeline.py
+MODEL_DIR=/path/to/Qwen3-VL-8B-Instruct python vtmod/test_modules.py
 ```
 
 If Habitat fails with a CUDA/EGL device error:
@@ -94,11 +116,15 @@ If Habitat fails with a CUDA/EGL device error:
 export __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json
 ```
 
-### 1. Rendering — clean panoramas
+### 1. Preprocess — rendering and (optional) filtering
+
+Rendering and filtering are independent. Rendering writes RGB keyframes. Filtering scores R2R-CE train instructions and writes a keep-list that SFT / GRPO read.
+
+#### Rendering — clean panoramas
 
 ```bash
 # R2R-CE (paper defaults: 256×384 faces → 768×384 pano, camera_height=0.75)
-python rendering/nig_render_dataset_r2rce_detail.py \
+python preprocess/rendering/render_r2rce.py \
   --train_json /path/to/R2R_VLNCE_v1-3/train/train.json.gz \
   --scenes_root /path/to/scenes_root \
   --output_dir data/R2RCE_visual/r2rce_train_visual \
@@ -110,7 +136,7 @@ python rendering/nig_render_dataset_r2rce_detail.py \
   --panorama --panorama_hfov 90.0 --panorama_step 90.0
 
 # RxR-CE
-python rendering/nig_render_rxr_dataset.py \
+python preprocess/rendering/render_rxrce.py \
   --train_json /path/to/RxR_VLNCE_v0/train/train_guide.json.gz \
   --scenes_root /path/to/scenes_root \
   --output_dir data/RXRCE_visual/rxrce_train_visual \
@@ -119,15 +145,22 @@ python rendering/nig_render_rxr_dataset.py \
   --panorama --panorama_hfov 90.0 --panorama_step 90.0
 ```
 
-`rendering/run_render_r2rce.sh` and `rendering/run_render_rxrce.sh` wrap the two commands above with the paper geometry and render both `train` and `val_unseen` into the four canonical directories used by every later stage. Set `DATASET_ROOT` (or `TRAIN_JSON` / `VAL_UNSEEN_JSON` / `SCENES_ROOT`) to point them at your data.
+`preprocess/rendering/run_render_r2rce.sh` and `run_render_rxrce.sh` wrap the two commands above with the paper geometry and render both `train` and `val_unseen` into the four canonical directories used by every later stage. Set `DATASET_ROOT` (or `TRAIN_JSON` / `VAL_UNSEEN_JSON` / `SCENES_ROOT`) to point them at your data.
 
-Optional: regenerate the R2R filter with `bash rendering/run_gpt_filter_r2rce_train.sh` (API key required). The paper ships `rendering/filtered_ult_gt6.json`.
+#### Filtering — optional keep-list for R2R-CE train
 
-### 2. VP masks
+To keep reproduction stable, we ship both the paper keep-list (`preprocess/filtering/r2rce_train_filtered.json`, score ≥ 6) and our filtering script. You do not need to rerun the filter to match the paper; SFT / GRPO already default to that JSON. If you want a different scorer or threshold, edit the scripts under `preprocess/filtering/` and run:
 
-**Use this as the Stage-2 entry** — it writes overlays **and** `vp_masks`, editing each episode directory in place. Do **not** use `visual_prompt/render_with_vp*.py` here (no masks → zero-mask training).
+```bash
+# needs a DashScope / Qwen API key
+bash preprocess/filtering/run_filter.sh
+```
 
-Run it on **all four** splits, `val_unseen` included: the VP-Adapter consumes `vp_masks` at inference exactly as it does during training, so reproducing the reported numbers needs masks on the eval splits too.
+### 2. VTP overlays and masks
+
+Stage 1 writes **clean** RGB panoramas. Stage 2 walks the same trajectories again, paints ribbon / turn / goal onto those frames, and writes a 3-channel binary mask (`C0=ribbon, C1=arrow, C2=endpoint`) that the VP-Adapter reads. It edits each `episode_*` directory in place.
+
+Run it on **all four** splits, `val_unseen` included: the VP-Adapter consumes `vp_masks` at inference exactly as it does during training.
 
 ```bash
 for split in \
@@ -136,7 +169,7 @@ for split in \
   data/RXRCE_visual/rxrce_train_visual \
   data/RXRCE_visual/rxrce_valunseen_visual
 do
-  python vp_adapter/render_vp_masks_from_samples.py \
+  python visual_prompt/render_masks.py \
     --data_dir "$split" \
     --scenes_root /path/to/scenes_root \
     --width 256 --height 384 --camera_height 0.75 \
@@ -146,7 +179,9 @@ done
 
 If masks are missing the code falls back to all-zero masks and prints a `[VP]` line naming the split. During **training** that is a `WARN` and almost certainly means Stage 2 was skipped. During **evaluation or inference** it is an `INFO`: running without visual trajectory prompting is a supported mode, it just measures the no-VTP setting. `EVAL_ZERO_VP=1` requests that ablation explicitly.
 
-For data augmentation this stage is optional — see [Inference for data augmentation](#5-inference-for-data-augmentation).
+For data augmentation this stage is optional — see [Inference for data augmentation](#6-inference-for-data-augmentation).
+
+To run stages 1–4 in one go: `bash run_pipeline.sh`.
 
 ### 3. VP-Adapter SFT
 
@@ -154,34 +189,44 @@ For data augmentation this stage is optional — see [Inference for data augment
 export MODEL_DIR=/path/to/Qwen3-VL-8B-Instruct
 export R2RCE_TRAIN_DATA_DIR=data/R2RCE_visual/r2rce_train_visual
 export RXRCE_TRAIN_DATA_DIR=data/RXRCE_visual/rxrce_train_visual
-export R2RCE_EVAL_DATA_DIR=data/R2RCE_visual/r2rce_valunseen_visual
-export RXRCE_EVAL_DATA_DIR=data/RXRCE_visual/rxrce_valunseen_visual
-bash vp_adapter/run_vp_sft_pipeline.sh
+bash train/run_sft.sh
 ```
 
-All five paths already default to the layout Stage 1 produces, so the exports are only needed if your data lives elsewhere. Uses `torch.distributed.run` (HF Trainer + DDP); `FILTERED_JSON` / `R2R_VAL_UNSEEN_JSON` default to the shipped files.
+Train data paths already default to the layout Stage 1 produces. Uses `torch.distributed.run` (HF Trainer + DDP); `FILTERED_JSON` defaults to the shipped keep-list.
 
-To evaluate an existing checkpoint without any training data on disk:
+This script **trains only**. Scoring is the next section.
 
-```bash
-EVAL_ONLY=1 EVAL_CKPT=/path/to/checkpoint bash vp_adapter/run_vp_sft_pipeline.sh
-```
-
-### 4. VP-GRPO + eval
+### 4. VP-GRPO
 
 ```bash
-# train (gate-only GRPO on the SFT checkpoint)
 export MODEL_DIR=/path/to/Qwen3-VL-8B-Instruct
 export SFT_CKPT=/path/to/outputs/nig_vp_adapter_v3.1_sft/checkpoint-NNNN
-bash vp_grpo/run_grpo_vp_v3.1.sh
-
-# eval
-EVAL_CKPT=/path/to/rl/best bash vp_grpo/eval_vp_v3.1.sh
+bash train/run_grpo.sh
 ```
 
 `R2R_TRAIN_JSON` is optional; without it, GRPO aggregates multi-refs by `trajectory_id`.
 
-### 5. Inference for data augmentation
+### 5. Evaluation (infer → score)
+
+`eval/infer.py` writes a JSON list of `{prediction, references, ...}` (same schema as `metrics/pred_example.json`). `eval/run_eval.sh` then calls `metrics/evaluate.py` on that file. Extra keys such as `trajectory_id` are ignored by the scorer.
+
+```bash
+export MODEL_DIR=/path/to/Qwen3-VL-8B-Instruct
+export R2RCE_EVAL_DATA_DIR=data/R2RCE_visual/r2rce_valunseen_visual
+export RXRCE_EVAL_DATA_DIR=data/RXRCE_visual/rxrce_valunseen_visual
+EVAL_CKPT=/path/to/checkpoint bash eval/run_eval.sh
+```
+
+`R2R_VAL_UNSEEN_JSON` defaults to the shipped `metrics/R2R_val_unseen.json`. To score an existing pred JSON without re-running inference:
+
+```bash
+python metrics/evaluate.py \
+  --pred_json outputs/eval/eval_r2rce_valunseen_YYYYMMDD_HHMMSS.json \
+  --out_json  outputs/eval/eval_r2rce_valunseen_YYYYMMDD_HHMMSS_metrics.json \
+  --print_ref_stats
+```
+
+### 6. Inference for data augmentation
 
 If you want to use VTInstructor for data augmentation, **VTP rendering is optional**. The model supports instruction generation from RGB renders alone, because the VTP contextual information is already learned into the weights during training. Supplying VTP renders (Stage 2) still gives more accurate instructions, so use them when you can.
 
@@ -195,23 +240,39 @@ DATA_DIR=/path/to/rendered_split \
 DATASET_TYPE=r2rce \
 OUT_JSON=outputs/augment/r2r_style.json \
 GEN_CUDA=0,1,2,3 \
-  bash vp_adapter/run_generate_instructions.sh
+  bash generate/run_generate.sh
 
 # RxR-style narration for the same trajectories
 DATASET_TYPE=rxrce OUT_JSON=outputs/augment/rxr_style.json \
 CKPT=... MODEL_DIR=... DATA_DIR=... \
-  bash vp_adapter/run_generate_instructions.sh
+  bash generate/run_generate.sh
 ```
 
 `VP_MODE=auto` (the default) uses `vp_masks` when the split has them and drops to the RGB-only path when it does not, so one command covers both. Other useful knobs: `GRANULARITY` (`trajectory` or `episode`), `TEMPERATURE` (raise to ~1.0 for diverse augmentations), `GEN_CUDA` (multi-GPU, shards merged automatically).
 
-Output is a records JSON with `generated_instruction`, `trajectory_id`, `episode_ids` and `scene_id`. To get a split a VLN-CE dataloader can load directly, give the original `.json.gz` as a template — episode geometry is cloned and only the instruction text is replaced:
+Output is a records JSON with `generated_instruction`, `trajectory_id`, `episode_ids` and `scene_id`. That schema is **not** the input to `metrics/evaluate.py` (which needs `prediction` + `references`); use `eval/run_eval.sh` for paper scores. To get a split a VLN-CE dataloader can load directly, give the original `.json.gz` as a template — episode geometry is cloned and only the instruction text is replaced:
 
 ```bash
 CKPT=... DATA_DIR=... \
 VLNCE_TEMPLATE=/path/to/R2R_VLNCE_v1-3/train/train.json.gz \
 OUT_VLNCE_GZ=outputs/augment/train_generated.json.gz \
-  bash vp_adapter/run_generate_instructions.sh
+  bash generate/run_generate.sh
 ```
 
 Stale `instruction_tokens` are dropped from the emitted split, so re-tokenise with your follower's vocabulary.
+
+## Citation
+
+If you use this repository or the released model, please cite:
+
+```bibtex
+@misc{yang2026vtinstructorvisualtrajectoryprompting,
+      title={VTInstructor: Visual Trajectory Prompting for Navigation Instruction Generation in Continuous Environments},
+      author={Haolin Yang and Yuxing Long and Zihan Yang and Hao Dong},
+      year={2026},
+      eprint={2608.15284},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2608.15284},
+}
+```

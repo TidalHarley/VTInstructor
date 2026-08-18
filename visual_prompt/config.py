@@ -15,12 +15,10 @@ from typing import Tuple
 
 @dataclass
 class VisualPromptConfig:
-    # ── 路径几何（3D 重采样 + 平滑）──
     path_resample_interval: float = 0.08
     path_smooth_sigma_m: float = 0.12
     path_elevation: float = 0.02
 
-    # ── 路径绘制（像素空间，粗细一致）──
     path_thickness_px: int = 14
     path_color: Tuple[int, int, int] = (0, 190, 255)
     path_border_color: Tuple[int, int, int] = (0, 100, 180)
@@ -28,33 +26,27 @@ class VisualPromptConfig:
     path_alpha_base: float = 0.82
     path_alpha_range: Tuple[float, float] = (0.70, 0.92)
 
-    # ── 遮挡 ──
     occlusion_tau: float = 0.20
 
-    # ── 箭头 ──
     arrow_head_length_px: int = 28
     arrow_head_width_px: int = 24
 
     # ── Mode A 阈值（下倾 30° 后地面大面积可见，阈值可宽松）──
     mode_a_min_visible_count: int = 2
 
-    # ── Mode B beacon ──
     beacon_radius_px: int = 14
     beacon_ring_width: int = 4
 
-    # ── Mode C HUD ──
     hud_margin_bottom_px: int = 18
     hud_arrow_size_px: int = 32
     hud_bg_radius_px: int = 40
     hud_alpha: float = 0.70
 
-    # ── augmentation ──
     prompt_dropout_prob: float = 0.15
     style_jitter_alpha_std: float = 0.04
     style_jitter_hue_range: float = 12.0
     style_jitter_width_factor: Tuple[float, float] = (0.85, 1.15)
     mixed_mode_prob: float = 0.10
 
-    # ── depth sensor ──
     depth_near: float = 0.01
     depth_far: float = 10.0

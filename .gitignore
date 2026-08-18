@@ -14,6 +14,10 @@ api0key
 *api*key*
 *.key
 
+# Intermediate LLM-filter artifacts (regenerable; the keep-list is tracked)
+preprocess/filtering/to_score.json
+preprocess/filtering/scored_instructions.json
+
 # Data, renders, checkpoints, logs (never commit large artifacts)
 data/
 outputs/
