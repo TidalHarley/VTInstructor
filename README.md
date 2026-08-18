@@ -23,7 +23,6 @@ It covers:
 - **VP-GRPO** gate-only RL refinement
 - **Evaluation**: inference writes `prediction` + `references`; `metrics/evaluate.py` scores BLEU / CIDEr / METEOR / ROUGE-L / SPICE
 - **Inference for data augmentation**, with VTP rendering optional
-- But, DPC code in EDTC section was not available now.
 
 ```
 Stage 1  Preprocess     →  Habitat panoramas  +  optional instruction filter
