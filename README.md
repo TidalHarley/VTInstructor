@@ -12,7 +12,7 @@
 
 ## Introduction
 
-This repository provides the full open-source pipeline for **VTInstructor**: generating natural-language navigation instructions for trajectories in continuous environments (R2R-CE, RxR-CE).
+This repository provides the full open-source pipeline for **VTInstructor**: generating natural-language navigation instructions for trajectories in continuous environments (e.g. R2R-CE, RxR-CE).
 
 It covers:
 
@@ -44,7 +44,7 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 
 ```
 VTInstructor/
-├── preprocess/                 # Habitat panoramas + optional instruction filter
+├── preprocess/                 # Habitat rendering + optional instruction filter
 │   ├── rendering/              # ★ Stage 1a: R2R-CE / RxR-CE keyframes
 │   └── filtering/              # ★ Stage 1b: score + keep-list (ships r2rce_train_filtered.json)
 ├── visual_prompt/              # ★ Stage 2: VTP overlay + 3-channel masks
@@ -66,7 +66,7 @@ VTInstructor/
 ├── eval/                       # Benchmark inference (then score with metrics/)
 │   ├── infer.py                # writes prediction + references JSON
 │   └── run_eval.sh             # infer → metrics/evaluate.py
-├── generate/                   # Data augmentation only (not scored)
+├── generate/                   # Data augmentation only (not scored), useful when you want to generate training data for downstream VLN agents.
 │   ├── generate_instructions.py
 │   └── run_generate.sh
 ├── common/                     # Shared prompts, action grouping, panorama dataset
@@ -74,7 +74,7 @@ VTInstructor/
 ├── metrics/                    # NLG scoring only — no inference
 │   ├── evaluate.py
 │   ├── pred_example.json       # input schema for evaluate.py
-│   └── R2R_val_unseen.json     # 613 traj × 3 human refs
+│   └── R2R_val_unseen.json     # 613 traj × 3 human refs, ground truth for R2RCE valunseen scoring
 ├── environment/                # Exact SFT / GRPO pip freezes
 ├── ENVIRONMENT.md              # Two-env setup; DeepSpeed 0.14.4 pin
 ├── run_pipeline.sh             # Optional: run stages 1–4 in order
