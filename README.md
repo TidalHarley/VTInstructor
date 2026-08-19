@@ -119,10 +119,10 @@ export __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.js
 
 Rendering and filtering are independent. Rendering writes RGB keyframes. Filtering scores R2R-CE train instructions and writes a keep-list that SFT / GRPO read.
 
-#### Rendering — clean panoramas
+#### Rendering — clean images
 
 ```bash
-# R2R-CE (paper defaults: 256×384 faces → 768×384 pano, camera_height=0.75)
+# R2R-CE (paper defaults: 256×384 faces → 768×384 image, camera_height=0.75)
 python preprocess/rendering/render_r2rce.py \
   --train_json /path/to/R2R_VLNCE_v1-3/train/train.json.gz \
   --scenes_root /path/to/scenes_root \
@@ -159,7 +159,7 @@ bash preprocess/filtering/run_filter.sh
 
 Stage 1 writes **clean** RGB panoramas. Stage 2 walks the same trajectories again, paints ribbon / turn / goal onto those frames, and writes a 3-channel binary mask (`C0=ribbon, C1=arrow, C2=endpoint`) that the VP-Adapter reads. It edits each `episode_*` directory in place.
 
-Run it on **all four** splits, `val_unseen` included: the VP-Adapter consumes `vp_masks` at inference exactly as it does during training.
+Run it on **all four** splits, `val_unseen` included: the VP-Adapter consumes `vp_masks` at inference exactly as it does during training. Our testing confirms that training with VTP rendering teaches the VTInstructor model to understand spatial relationships. As a result, the model retains strong spatial skills during inference, even without any VTP overlays.
 
 ```bash
 for split in \
