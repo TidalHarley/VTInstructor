@@ -54,15 +54,18 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
   <sub><b>Table 2.</b> RxR-CE Val Unseen Results</sub>
 </p>
 
-<p align="center">
-  <img src="table3.png" width="50%"/><br/>
-  <sub><b>Table 3.</b> Downstream VLN task results</sub>
-</p>
-
-<p align="center">
-  <img src="table4.png" width="50%"/><br/>
-  <sub><b>Table 4.</b> Data augmentation results</sub>
-</p>
+<table align="center" width="88%">
+  <tr>
+    <td align="center" width="50%">
+      <a href="table3.png"><img src="table3.png" width="100%"/></a>
+      <br/><sub><b>Table 3.</b> Downstream VLN task results</sub>
+    </td>
+    <td align="center" width="50%">
+      <a href="table4.png"><img src="assets/table4.png" width="100%"/></a>
+      <br/><sub><b>Table 4.</b> Data augmentation results</sub>
+    </td>
+  </tr>
+</table>
 
 ## Repository layout
 
