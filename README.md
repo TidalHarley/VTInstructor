@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img src="teaser.png" alt="VTInstructor overview" width="80%"/>
+  <img src="teaser.png" alt="VTInstructor overview" width="90%"/>
 </p>
 
 <p align="center">
