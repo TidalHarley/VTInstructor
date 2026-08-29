@@ -971,9 +971,7 @@ def main():
                   f"contrast_α={args.gate_contrast_alpha}, "
                   f"contrast_τ={args.gate_contrast_tau}, "
                   f"gate_lr_scale={args.gate_lr_scale}")
-                  f"contrast_α={args.gate_contrast_alpha}, "
-                  f"contrast_τ={args.gate_contrast_tau}, "
-                  f"gate_lr_scale={args.gate_lr_scale}")
+                  
     elif freeze_vp:
         vp_encoder.requires_grad_(False)
         if hasattr(visual, "_vp_adapters"):
