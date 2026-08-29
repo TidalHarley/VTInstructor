@@ -19,7 +19,7 @@ import random
 import sys
 import time
 import types
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -1057,7 +1057,7 @@ def main():
     if rank == 0:
         print("[INFO] Building multi-reference mapping for reward computation ...")
 
-    multiref_mapping: Dict[int, List[str]] = {}
+    multiref_mapping: Dict[Tuple[str, int], List[str]] = {}
 
     if args.r2r_train_json and os.path.exists(args.r2r_train_json):
         with open(args.r2r_train_json, "r", encoding="utf-8") as f:
@@ -1065,20 +1065,21 @@ def main():
         for entry in r2r_data:
             pid = entry.get("path_id")
             if pid is not None:
-                pid = int(pid)
+                # R2R_train.json only ever describes R2R-CE trajectories.
+                key = ("r2rce", int(pid))
                 insts = entry.get("instructions", [])
                 if insts:
-                    if pid not in multiref_mapping:
-                        multiref_mapping[pid] = list(insts)
+                    if key not in multiref_mapping:
+                        multiref_mapping[key] = list(insts)
                     else:
-                        existing = set(multiref_mapping[pid])
+                        existing = set(multiref_mapping[key])
                         for inst in insts:
                             if inst not in existing:
-                                multiref_mapping[pid].append(inst)
+                                multiref_mapping[key].append(inst)
         if rank == 0:
             print(f"[INFO] Loaded {len(multiref_mapping)} trajectory refs from R2R_train.json")
 
-    traj_refs: Dict[int, set] = {}
+    traj_refs: Dict[Tuple[str, int], set] = {}
     added = 0
     for sample_path in dataset.sample_files:
         s = safe_load_json(sample_path)
@@ -1087,28 +1088,33 @@ def main():
         tid = s.get("trajectory_id")
         if tid is None:
             continue
-        tid = int(tid)
+        # Namespace by split: R2R-CE and RxR-CE reuse the same small integer
+        # trajectory_id space, so a bare int key silently merges their references.
+        key = (dataset.sample_dataset_type.get(sample_path, "r2rce"), int(tid))
         refs = set()
         inst = s.get("instruction")
         if inst:
             refs.add(inst)
-        if tid in traj_refs:
-            traj_refs[tid] |= refs
+        if key in traj_refs:
+            traj_refs[key] |= refs
         else:
-            traj_refs[tid] = refs
-    for tid, refs in traj_refs.items():
-        if tid not in multiref_mapping:
-            multiref_mapping[tid] = list(refs)
+            traj_refs[key] = refs
+    for key, refs in traj_refs.items():
+        if key not in multiref_mapping:
+            multiref_mapping[key] = list(refs)
             added += 1
         else:
-            existing = set(multiref_mapping[tid])
+            existing = set(multiref_mapping[key])
             for ref in refs:
                 if ref not in existing:
-                    multiref_mapping[tid].append(ref)
+                    multiref_mapping[key].append(ref)
     if rank == 0:
         n_total = len(multiref_mapping)
         avg_refs = sum(len(v) for v in multiref_mapping.values()) / max(n_total, 1)
-        print(f"[INFO] Multiref mapping: {n_total} trajectories, avg {avg_refs:.1f} refs/traj")
+        n_r2r = sum(1 for k in multiref_mapping if k[0] == "r2rce")
+        n_rxr = sum(1 for k in multiref_mapping if k[0] == "rxrce")
+        print(f"[INFO] Multiref mapping: {n_total} trajectories "
+              f"(r2rce={n_r2r}, rxrce={n_rxr}), avg {avg_refs:.1f} refs/traj")
     del traj_refs
 
     reward_computer = RewardComputer()
@@ -1285,8 +1291,12 @@ def main():
                 torch.cuda.empty_cache()
 
                 traj_id = sample.get("trajectory_id")
-                if traj_id is not None and int(traj_id) in multiref_mapping:
-                    refs = multiref_mapping[int(traj_id)]
+                if traj_id is not None:
+                    ref_key = (sample.get("dataset_type", "r2rce"), int(traj_id))
+                else:
+                    ref_key = None
+                if ref_key is not None and ref_key in multiref_mapping:
+                    refs = multiref_mapping[ref_key]
                 else:
                     refs = [sample["instruction"]]
 
