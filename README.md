@@ -44,6 +44,29 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 - **State-of-the-art performance with practical utility.** VTInstructor achieves state-of-the-art results on the R2R-CE and RxR-CE Val Unseen benchmarks, surpassing the strongest baseline by +0.109 and +0.357 CIDEr, respectively, improving frozen-follower success by 14.7 percentage points, and delivering +3 SR-point data augmentation gains on both benchmarks.
 - **Fully open-sourced codebase.** All code for rendering, VTP construction, VP-Adapter SFT, VP-GRPO, and evaluation is released in this repository, only DPC in EDTC section is not available yet.
 
+<table align="center">
+  <tr>
+    <td align="center" width="50%">
+      <a href="table1.png"><img src="table1.png" width="100%"/></a>
+      <br/><sub><b>Table 1.</b> R2R-CE Val Unseen 主结果</sub>
+    </td>
+    <td align="center" width="50%">
+      <a href="table2.png"><img src="table2.png" width="100%"/></a>
+      <br/><sub><b>Table 2.</b> RxR-CE Val Unseen 主结果</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <a href="table3.png"><img src="table3.png" width="100%"/></a>
+      <br/><sub><b>Table 3.</b> 消融实验</sub>
+    </td>
+    <td align="center" width="50%">
+      <a href="table4.png"><img src="table4.png" width="100%"/></a>
+      <br/><sub><b>Table 4.</b> 数据增强 / follower 结果</sub>
+    </td>
+  </tr>
+</table
+
 ## Repository layout
 
 ```
