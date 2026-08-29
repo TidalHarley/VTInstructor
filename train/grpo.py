@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
 VP-GRPO training for VTInstructor.
-
-Loads VTMod (encoder + adapter) from the SFT checkpoint, injects VP features
-on every forward, and (by default) updates only the adapter gates.
-
+On every forward. In --gate_only mode the vision tower, the VP encoder and the VP-adapter projections are frozen; the adapter gates and the LM decoder remain trainable.
 Launch:
     deepspeed --num_gpus=N train/grpo.py \
         --sft_checkpoint /path/to/sft_ckpt \
