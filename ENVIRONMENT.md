@@ -11,7 +11,6 @@ Exact environments used to train VTInstructor. Machine-readable package lists li
 | GPU | 8 x NVIDIA H200 (143 GB each) |
 | Driver / CUDA | 570.195.03 / CUDA 12.8 |
 | OS | Ubuntu 22.04.5 LTS |
-| Container image | `embody-h2-cn-north-1.jcr.service.jdcloud.com/mingxu-robocasa:v4.0` (md5 `5b367305037042691065a447d1df3aef`) |
 | Python | 3.10.19 |
 
 The container image is a shared team base image, not a VTInstructor-specific one. The
