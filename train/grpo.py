@@ -761,7 +761,7 @@ def parse_args():
     p.add_argument("--no_freeze_vp", action="store_true",
                    help="Allow VP modules to receive gradients during GRPO")
     p.add_argument("--gate_only", action="store_true",
-                   help="Only unfreeze gate params in VP adapters (VP encoder stays frozen)")
+                   help="Freeze VP encoder and adapter projections, leaving only the adapter gates (plus the LM decoder) trainable")
     p.add_argument("--gate_contrast_alpha", type=float, default=0.01,
                    help="Weight for contrastive gate loss (default: 0.01, keep small)")
     p.add_argument("--gate_contrast_tau", type=float, default=1.0,
@@ -949,7 +949,13 @@ def main():
                 for adapter in visual._vp_adapters.values()
                 if hasattr(adapter, "gate")
             )
-            print(f"[INFO] VP GATE-ONLY mode: {n_gate} gate params trainable, "
+            n_train = sum(p.numel() for p in policy_model.parameters() if p.requires_grad)
+            print(f"[INFO] VP gate+decoder mode: {n_gate} gate params + "
+                  f"{n_train - n_gate} decoder params trainable ({n_train} total); "
+                  f"vision tower and VP encoder frozen, "
+                  f"contrast_α={args.gate_contrast_alpha}, "
+                  f"contrast_τ={args.gate_contrast_tau}, "
+                  f"gate_lr_scale={args.gate_lr_scale}")
                   f"contrast_α={args.gate_contrast_alpha}, "
                   f"contrast_τ={args.gate_contrast_tau}, "
                   f"gate_lr_scale={args.gate_lr_scale}")
