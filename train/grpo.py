@@ -724,11 +724,26 @@ def _vp_enhanced_visual_forward_with_repeat(self, hidden_states, grid_thw, **kwa
 
         if vp_features is not None and layer_num in adapter_layer_set:
             vp_feat = vp_features
-            # Handle batched inputs: hidden_states may be N× larger
+            # Handle batched inputs: hidden_states may be N× larger.
+            #
+            # Both callers produce a TILED patch layout
+            # [copy0 patches | copy1 patches | ...]:
+            #   * compute_log_probs_batched  -> pixel_values.repeat(n, 1)
+            #   * model.generate(num_return_sequences=n) -> Qwen3-VL's
+            #     _expand_inputs_for_generation, which calls sample.repeat(n, 1)
+            #     per sample (transformers 4.57.6, modeling_qwen3_vl.py:1491).
+            # vp_feat is (total_patches, vp_dim), so it must be tiled the same way.
+            # repeat_interleave would map patch j to v[j // n] and destroy the
+            # patch-to-VP spatial correspondence.
             if vp_feat.shape[0] != hidden_states.shape[0]:
                 ratio = hidden_states.shape[0] // vp_feat.shape[0]
                 if ratio > 1 and hidden_states.shape[0] == vp_feat.shape[0] * ratio:
-                    vp_feat = vp_feat.repeat_interleave(ratio, dim=0)
+                    vp_feat = vp_feat.repeat(ratio, 1)
+            if vp_feat.shape[0] != hidden_states.shape[0]:
+                raise RuntimeError(
+                    f"VP/hidden mismatch at layer {layer_num}: "
+                    f"vp_feat={tuple(vp_feat.shape)} hidden={tuple(hidden_states.shape)}"
+                )
             adapter = self._vp_adapters[str(layer_num)]
             hidden_states = adapter(hidden_states, vp_feat, cu_seqlens)
 
