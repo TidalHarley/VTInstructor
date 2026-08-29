@@ -61,7 +61,7 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
       <br/><sub><b>Table 3.</b> Downstream VLN task results</sub>
     </td>
     <td align="center" width="50%">
-      <a href="table4.png"><img src="assets/table4.png" width="100%"/></a>
+      <a href="table4.png"><img src="table4.png" width="100%"/></a>
       <br/><sub><b>Table 4.</b> Data augmentation results</sub>
     </td>
   </tr>
