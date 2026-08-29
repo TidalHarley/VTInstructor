@@ -20,7 +20,7 @@ It covers:
 - **Instruction filtering** (optional; a keep-list for SFT / GRPO is shipped)
 - **Visual Trajectory Prompt (VTP)** overlays and 3-channel semantic masks (ribbon / arrow / endpoint)
 - **VP-Adapter SFT** on Qwen3-VL-8B-Instruct
-- **VP-GRPO** gate-only RL refinement
+- **VP-GRPO** RL refinement
 - **Evaluation**: inference writes `prediction` + `references`; `metrics/evaluate.py` scores BLEU / CIDEr / METEOR / ROUGE-L / SPICE
 - **Inference for data augmentation**, with VTP rendering optional
 
@@ -28,7 +28,7 @@ It covers:
 Stage 1  Preprocess     →  Habitat panoramas  +  optional instruction filter
 Stage 2  VP masks       →  overlay frames + 3-channel semantic masks
 Stage 3  VP-Adapter SFT →  supervised fine-tuning
-Stage 4  VP-GRPO        →  RL refinement (gate-only)
+Stage 4  VP-GRPO        →  RL refinement
 Eval     infer + score  →  eval/infer.py → metrics/evaluate.py
 Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 ```
@@ -36,7 +36,7 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 ## Contribution
 
 - **The first VLN instruction generation framework for continuous environments.** VTInstructor generates instructions from ego-centric RGB trajectories paired with action sequences; the model itself receives only RGB frames as visual input, without navigation graphs, pre-built maps, or scene reconstruction.
-- **A visual trajectory prompting framework for explicit spatial grounding.** We convert implicit trajectory geometry in dense RGB streams into explicit spatial cues through EDTC for navigation-critical keyframe selection, VTP for path/turn/goal prompting on these anchors, VTMod for trajectory-aware visual encoding, and VT-GRPO for reward-driven calibration of spatial signal injection.
+- **A visual trajectory prompting framework for explicit spatial grounding.** We convert implicit trajectory geometry in dense RGB streams into explicit spatial cues through EDTC for navigation-critical keyframe selection, VTP for path/turn/goal prompting on these anchors, VTMod for trajectory-aware visual encoding, and VT-GRPO for reward-driven refinement, jointly calibrating the spatial injection gates and the language decoder.
 - **State-of-the-art performance with practical utility.** VTInstructor achieves state-of-the-art results on the R2R-CE and RxR-CE Val Unseen benchmarks, surpassing the strongest baseline by +0.109 and +0.357 CIDEr, respectively, improving frozen-follower success by 14.7 percentage points, and delivering +3 SR-point data augmentation gains on both benchmarks.
 - **Fully open-sourced codebase.** All code for rendering, VTP construction, VP-Adapter SFT, VP-GRPO, and evaluation is released in this repository, only DPC in EDTC section is not available yet.
 
