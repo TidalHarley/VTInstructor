@@ -56,7 +56,14 @@ def normalize_text_for_metrics(text: str) -> str:
 
 def build_prompt_from_sample(sample: dict, max_frames: int):
     import os as _os
-    if _os.environ.get("EVAL_FRAME_SOURCE", "overlay") == "clean" and sample.get("clean_frames"):
+    _zero_vp = _os.environ.get("EVAL_ZERO_VP", "0") == "1"
+    _frame_src = _os.environ.get("EVAL_FRAME_SOURCE", "clean" if _zero_vp else "overlay")
+    if _frame_src == "clean":
+        if not sample.get("clean_frames"):
+            raise SystemExit(
+                "[FATAL] EVAL_FRAME_SOURCE=clean (or EVAL_ZERO_VP=1) but this split has no "
+                "'clean_frames'. Re-run Stage 2 (visual_prompt/render_masks.py) to record them."
+            )
         sample = dict(sample); sample["frames"] = sample["clean_frames"]
     if "action_events_text" in sample:
         actions_list = sample["action_events_text"]
