@@ -7,6 +7,10 @@
 </p>
 
 <p align="center">
+  <img src="teaser.png" alt="VTInstructor overview" width="80%"/>
+</p>
+
+<p align="center">
   <img src="vt-instructor.png" alt="VTInstructor overview" width="90%"/>
 </p>
 
