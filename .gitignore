@@ -38,8 +38,15 @@ wandb/
 *.mp4
 *.webm
 
-# ...except figures the README embeds
-!vt-instructor.png
+# Keep README figures and the GitHub Pages project site
+!/assets/
+!/assets/**/*.png
+!/docs/
+!/docs/**/*.png
+!/docs/**/*.jpg
+!/docs/**/*.jpeg
+!/docs/**/*.mp4
+!/docs/**/*.webm
 
 # OS
 .DS_Store

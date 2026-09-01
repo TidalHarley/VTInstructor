@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VTInstructor: Visual Trajectory Prompting for Navigation Instruction Generation in Continuous Environments</title>
+  <meta name="description" content="VTInstructor is the first and state-of-the-art navigation instruction generation framework for continuous environments, converting implicit trajectory geometry into explicit visual trajectory prompts. Accepted to ACM Multimedia 2026." />
+
+  <meta property="og:title" content="VTInstructor (ACM MM 2026)" />
+  <meta property="og:description" content="Visual Trajectory Prompting for Navigation Instruction Generation in Continuous Environments." />
+  <meta property="og:image" content="static/images/fig1_teaser.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="static/css/style.css?v=ep52c" />
+
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <!-- ===================== HERO ===================== -->
+  <header class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <img class="venue-logo" src="static/images/acmmm2026.png" alt="ACM Multimedia 2026, Rio de Janeiro, Brazil" />
+      <h1 class="paper-title">VTInstructor: Visual Trajectory Prompting for Navigation Instruction Generation in Continuous Environments</h1>
+
+      <div class="authors">
+        <span class="author">Haolin Yang<sup>*</sup></span>
+        <span class="author">Yuxing Long<sup>*</sup></span>
+        <span class="author">Zihan Yang<sup>*</sup></span>
+        <span class="author">Hao Dong<sup>&dagger;</sup></span>
+      </div>
+      <div class="affils">
+        CFCS, School of Computer Science, Peking University<br />
+        PrimeBot
+      </div>
+      <div class="author-note"><sup>*</sup>Equal contribution&nbsp;&nbsp;&nbsp;<sup>&dagger;</sup>Corresponding author</div>
+    </div>
+  </header>
+
+  <!-- ===================== LINKS ===================== -->
+  <section class="hero-links">
+    <div class="container">
+      <div class="paper-links">
+        <a class="link-pill" href="pdf/VTInstructor.pdf" target="_blank" rel="noopener" aria-label="Paper on arXiv">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.8423 0a1.0037 1.0037 0 0 0-.922.6078c-.1536.3687-.0438.6275.2938 1.1113l6.9185 8.3597-1.0223 1.1058a1.0393 1.0393 0 0 0 .003 1.4229l1.2292 1.3135-5.4391 6.4444c-.2803.299-.4538.823-.2971 1.1986a1.0253 1.0253 0 0 0 .9585.635.9133.9133 0 0 0 .6891-.3405l5.783-6.126 7.4902 8.0051a.8527.8527 0 0 0 .6835.2597.9575.9575 0 0 0 .8777-.6138c.1577-.377-.017-.7502-.306-1.1407l-7.0518-8.3418 1.0632-1.13a.9626.9626 0 0 0 .0089-1.3165L4.6336.4639s-.3733-.4535-.768-.463zm0 .272h.0166c.2179.0052.4874.2715.5644.3639l.005.006.0052.0055 10.169 10.9905a.6915.6915 0 0 1-.0072.945l-1.0666 1.133-1.4982-1.7724-8.5994-10.39c-.3286-.472-.352-.6183-.2592-.841a.7307.7307 0 0 1 .6704-.4401Zm14.341 1.5701a.877.877 0 0 0-.6554.2418l-5.6962 6.1584 1.6944 1.8319 5.3089-6.5138c.3251-.4335.479-.6603.3247-1.0292a1.1205 1.1205 0 0 0-.9763-.689zm-7.6557 12.2823 1.3186 1.4135-5.7864 6.1295a.6494.6494 0 0 1-.4959.26.7516.7516 0 0 1-.706-.4669c-.1119-.2682.0359-.6864.2442-.9083l.0051-.0055.0047-.0055z"/></svg>
+          <span>Paper</span>
+        </a>
+        <a class="link-pill" href="https://github.com/TidalHarley/VTInstructor" target="_blank" rel="noopener" aria-label="Code on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          <span>Code</span>
+        </a>
+        <a class="link-pill" href="https://huggingface.co/TidalYang/VTInstructor-8b" target="_blank" rel="noopener" aria-label="Model on Hugging Face">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.025 1.13c-5.77 0-10.449 4.647-10.449 10.378 0 1.112.178 2.181.503 3.185.064-.222.203-.444.416-.577a.96.96 0 0 1 .524-.15c.293 0 .584.124.84.284.278.173.48.408.71.694.226.282.458.611.684.951v-.014c.017-.324.106-.622.264-.874s.403-.487.762-.543c.3-.047.596.06.787.203s.31.313.4.467c.15.257.212.468.233.542.01.026.653 1.552 1.657 2.54.616.605 1.01 1.223 1.082 1.912.055.537-.096 1.059-.38 1.572.637.121 1.294.187 1.967.187.657 0 1.298-.063 1.921-.178-.287-.517-.44-1.041-.384-1.581.07-.69.465-1.307 1.081-1.913 1.004-.987 1.647-2.513 1.657-2.539.021-.074.083-.285.233-.542.09-.154.208-.323.4-.467a1.08 1.08 0 0 1 .787-.203c.359.056.604.29.762.543s.247.55.265.874v.015c.225-.34.457-.67.683-.952.23-.286.432-.52.71-.694.257-.16.547-.284.84-.285a.97.97 0 0 1 .524.151c.228.143.373.388.43.625l.006.04a10.3 10.3 0 0 0 .534-3.273c0-5.731-4.678-10.378-10.449-10.378M8.327 6.583a1.5 1.5 0 0 1 .713.174 1.487 1.487 0 0 1 .617 2.013c-.183.343-.762-.214-1.102-.094-.38.134-.532.914-.917.71a1.487 1.487 0 0 1 .69-2.803m7.486 0a1.487 1.487 0 0 1 .689 2.803c-.385.204-.536-.576-.916-.71-.34-.12-.92.437-1.103.094a1.487 1.487 0 0 1 .617-2.013 1.5 1.5 0 0 1 .713-.174m-10.68 1.55a.96.96 0 1 1 0 1.921.96.96 0 0 1 0-1.92m13.838 0a.96.96 0 1 1 0 1.92.96.96 0 0 1 0-1.92M8.489 11.458c.588.01 1.965 1.157 3.572 1.164 1.607-.007 2.984-1.155 3.572-1.164.196-.003.305.12.305.454 0 .886-.424 2.328-1.563 3.202-.22-.756-1.396-1.366-1.63-1.32q-.011.001-.02.006l-.044.026-.01.008-.03.024q-.018.017-.035.036l-.032.04a1 1 0 0 0-.058.09l-.014.025q-.049.088-.11.19a1 1 0 0 1-.083.116 1.2 1.2 0 0 1-.173.18q-.035.029-.075.058a1.3 1.3 0 0 1-.251-.243 1 1 0 0 1-.076-.107c-.124-.193-.177-.363-.337-.444-.034-.016-.104-.008-.2.022q-.094.03-.216.087-.06.028-.125.063l-.13.074q-.067.04-.136.086a3 3 0 0 0-.135.096 3 3 0 0 0-.26.219 2 2 0 0 0-.12.121 2 2 0 0 0-.106.128l-.002.002a2 2 0 0 0-.09.132l-.001.001a1.2 1.2 0 0 0-.105.212q-.013.036-.024.073c-1.139-.875-1.563-2.317-1.563-3.203 0-.334.109-.457.305-.454m.836 10.354c.824-1.19.766-2.082-.365-3.194-1.13-1.112-1.789-2.738-1.789-2.738s-.246-.945-.806-.858-.97 1.499.202 2.362c1.173.864-.233 1.45-.685.64-.45-.812-1.683-2.896-2.322-3.295s-1.089-.175-.938.647 2.822 2.813 2.562 3.244-1.176-.506-1.176-.506-2.866-2.567-3.49-1.898.473 1.23 2.037 2.16c1.564.932 1.686 1.178 1.464 1.53s-3.675-2.511-4-1.297c-.323 1.214 3.524 1.567 3.287 2.405-.238.839-2.71-1.587-3.216-.642-.506.946 3.49 2.056 3.522 2.064 1.29.33 4.568 1.028 5.713-.624m5.349 0c-.824-1.19-.766-2.082.365-3.194 1.13-1.112 1.789-2.738 1.789-2.738s.246-.945.806-.858.97 1.499-.202 2.362c-1.173.864.233 1.45.685.64.451-.812 1.683-2.896 2.322-3.295s1.089-.175.938.647-2.822 2.813-2.562 3.244 1.176-.506 1.176-.506 2.866-2.567 3.49-1.898-.473 1.23-2.037 2.16c-1.564.932-1.686 1.178-1.464 1.53s3.675-2.511 4-1.297c.323 1.214-3.524 1.567-3.287 2.405.238.839 2.71-1.587 3.216-.642.506.946-3.49 2.056-3.522 2.064-1.29.33-4.568 1.028-5.713-.624"/></svg>
+          <span>Model</span>
+        </a>
+        <a class="link-pill" href="#bibtex" aria-label="BibTeX citation">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h11l5 5v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm10 1.5V8h4.5L15 3.5zM7 12v1.6h10V12H7zm0 3.4V17h10v-1.6H7zm0 3.4V20h6.5v-1.2H7z"/></svg>
+          <span>BibTeX</span>
+        </a>
+      </div>
+
+      <p class="tldr">
+        The <span class="hl">first</span> and <span class="hl">SoTA</span> navigation instruction generation
+        framework for continuous environments.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== TEASER (FIG 1) ===================== -->
+  <section class="section teaser-section">
+    <div class="container">
+      <figure class="teaser-figure">
+        <img src="static/images/fig1_teaser.png" alt="Evolution of navigation instruction generation paradigms" loading="lazy" />
+        <figcaption>
+          <strong>Figure 1. Evolution of navigation instruction generation paradigms.</strong>
+          (a)&ndash;(c) Prior speakers rely on discrete viewpoint graphs with panoramic images, optionally
+          augmented by external knowledge or 3D representations. (d) <strong>VTInstructor (Ours)</strong> generates
+          instructions directly from ego-centric RGB video in continuous environments, using
+          <em>Visual Trajectory Prompts</em> for spatial grounding without any navigation graph or 3D reconstruction.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== ABSTRACT ===================== -->
+  <section id="abstract" class="section">
+    <div class="container narrow">
+      <h2 class="section-title">Abstract</h2>
+      <p class="abstract-text">
+        Navigation instruction generation from ego-centric RGB video in continuous environments is an
+        important yet challenging task for human&ndash;robot interaction and scalable dataset construction.
+        Prior instruction generators assume discrete viewpoint graphs with panoramic observations, where
+        trajectory structure is explicit; in continuous environments, however, the agent receives only a
+        dense RGB stream, making trajectory cues difficult to recover. We propose <strong>VTInstructor</strong>,
+        the first VLN instruction generation framework for continuous environments. Our key idea is to convert
+        implicit trajectory geometry into <strong>explicit visual trajectory prompts</strong>: <strong>EDTC</strong>
+        condenses long RGB trajectories into navigation-critical keyframes, <strong>VTP</strong> overlays path,
+        turn, and goal cues onto these anchors, <strong>VTMod</strong> injects the resulting trajectory signals
+        into the visual encoder, and <strong>VT-GRPO</strong> further calibrates this spatial injection during
+        training &mdash; all without requiring a navigation graph, pre-built map, or scene reconstruction.
+        On the challenging R2R-CE and RxR-CE Val Unseen benchmarks, VTInstructor sets a new state of the art
+        across all standard NLG metrics, surpassing the strongest baseline by +0.357 and +0.109 CIDEr,
+        respectively. Beyond automatic metrics, VTInstructor-generated instructions raise a frozen follower's
+        success rate to 63.3%, a +14.7 percentage-point gain over the best competing instruction source.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== CONTRIBUTIONS ===================== -->
+  <section id="contributions" class="section">
+    <div class="container narrow">
+      <h2 class="section-title">Contributions</h2>
+      <ol class="contrib-list">
+        <li>
+          <strong>The first navigation instruction generator for continuous environments.</strong>
+          VTInstructor produces instructions directly from ego-centric RGB video, without any navigation
+          graph, pre-built map, or scene reconstruction.
+        </li>
+        <li>
+          <strong>Visual Trajectory Prompting.</strong> We turn implicit trajectory geometry into explicit
+          visual cues &mdash; a path ribbon, rotation arrow, and endpoint marker rendered back onto keyframes
+          and encoded as a 3-channel binary mask &mdash; and inject them into the visual encoder through the
+          lightweight VTMod, so spatial structure is available where the model actually needs it.
+        </li>
+        <li>
+          <strong>State of the art with real utility.</strong> VTInstructor sets a new SoTA on R2R-CE and
+          RxR-CE Val Unseen across all NLG metrics, and its instructions raise a frozen follower's success rate
+          to 63.3% &mdash; surpassing human annotations (61.6%).
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== METHOD ===================== -->
+  <section id="method" class="section alt">
+    <div class="container">
+      <h2 class="section-title">Method Overview</h2>
+      <figure class="method-figure">
+        <img src="static/images/fig2_method.png" alt="Overview of the VTInstructor framework" loading="lazy" />
+        <figcaption>
+          <strong>Figure 2. Overview of VTInstructor.</strong> Given a raw ego-centric RGB trajectory, event-driven
+          compression produces a compact keyframe set. Each keyframe is annotated with a Visual Trajectory Prompt
+          (path ribbon / rotation arrow / endpoint marker), encoded as a 3-channel binary mask, and fed to the
+          VTMod-augmented Qwen3-VL backbone. The model is trained in two stages: SFT, followed by VT-GRPO.
+        </figcaption>
+      </figure>
+
+      <div class="component-grid">
+        <div class="component-card">
+          <span class="component-tag">1</span>
+          <h3>EDTC &mdash; Event-Driven Trajectory Compression</h3>
+          <p>A three-level pipeline condenses a long RGB trajectory into
+             navigation-critical keyframes (\(n \le 32\)): action run-length encoding,
+             small-step combo grouping, and dynamic priority-based selection using a joint
+             visual&ndash;geometric score.</p>
+        </div>
+        <div class="component-card">
+          <span class="component-tag">2</span>
+          <h3>VTP &mdash; Visual Trajectory Prompt</h3>
+          <p>Each keyframe is overlaid with a <strong>path ribbon</strong>, <strong>rotation arrow</strong> and
+             <strong>endpoint marker</strong>, stored as a 3-channel binary mask
+             \(M \in \{0,1\}^{3\times H\times W}\). GPT-based quality filtering keeps only spatially reliable
+             instruction&ndash;keyframe pairs.</p>
+        </div>
+        <div class="component-card">
+          <span class="component-tag">3</span>
+          <h3>VTMod &mdash; Visual Trajectory Modulator</h3>
+          <p>A lightweight encoder maps the mask to patch-aligned features injected into the ViT at
+             <strong>layer 7</strong> via per-token spatial modulation
+             \(\mathbf{h}'_i = \mathbf{h}_i + \mathbf{g}\odot \mathrm{LN}(\mathbf{W}\mathbf{v}_i)\),
+             where the gate \(\mathbf{g}\) starts near zero for lazy activation.</p>
+        </div>
+        <div class="component-card">
+          <span class="component-tag">4</span>
+          <h3>VT-GRPO &mdash; Reward Calibration</h3>
+          <p>Reinforcement learning refines the gate and LLM using a weighted NLG reward over \(G{=}8\) sampled
+             responses, plus a <strong>gate contrastive loss</strong> on the best/worst completions to sharpen
+             which trajectory channels are amplified.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== VTP INTERACTIVE ===================== -->
+  <section id="vtp" class="section">
+    <div class="container">
+      <h2 class="section-title">See the Visual Trajectory Prompt</h2>
+      <p class="section-sub">
+        The Visual Trajectory Prompt renders the route back onto the ego-centric view.
+        <strong>Watch how the same trajectory becomes far easier to read once the path ribbon, turn arrows and goal marker are overlaid.</strong>
+      </p>
+
+      <div class="video-grid">
+        <figure class="video-item">
+          <video autoplay muted loop playsinline poster="static/images/vtp1_poster.png?v=17">
+            <source src="static/video/vtp1.mp4?v=17" type="video/mp4" />
+            <source src="static/video/vtp1.webm?v=17" type="video/webm" />
+          </video>
+          <figcaption>
+            <strong>Generated instruction:</strong>
+            Exit the bedroom and turn right. Walk past the kitchen and turn right. Wait at the entrance to the hallway, close to the sculpture.
+          </figcaption>
+        </figure>
+        <figure class="video-item">
+          <video autoplay muted loop playsinline poster="static/images/vtp2_poster.png?v=17">
+            <source src="static/video/vtp2.mp4?v=17" type="video/mp4" />
+            <source src="static/video/vtp2.webm?v=17" type="video/webm" />
+          </video>
+          <figcaption>
+            <strong>Generated instruction:</strong>
+            Walk through the kitchen and turn right. Walk past the dining room table and chairs and into the living room. Turn right and walk into the pool table room. Stop in front of the pool table.
+          </figcaption>
+        </figure>
+        <figure class="video-item">
+          <video autoplay muted loop playsinline poster="static/images/vtp3_poster.png?v=17">
+            <source src="static/video/vtp3.mp4?v=17" type="video/mp4" />
+            <source src="static/video/vtp3.webm?v=17" type="video/webm" />
+          </video>
+          <figcaption>
+            <strong>Generated instruction:</strong>
+            Exit the room by the smaller of the two doorways. Turn right and go down the stairs. At the landing, turn right, and go half way down the second flight of stairs. Stop there.
+          </figcaption>
+        </figure>
+      </div>
+      <p class="video-cap">
+        Three R2R-CE trajectories, keyframe by keyframe. <strong>Left:</strong> raw ego-centric RGB.
+        <strong>Right:</strong> the same frames with the Visual Trajectory Prompt &mdash; direction, turns and
+        goal progress that were implicit in the pixels are now explicit.
+      </p>
+
+      <p class="section-sub" style="margin-top:44px;">
+        <strong>Drag the bar</strong> to compare the Visual Trajectory Prompt on / off for the
+        current keyframe, and <strong>click <em>Next keyframe</em></strong> to move one step along the route.
+      </p>
+
+      <div class="vtp-explorer single" id="vtpStepper">
+        <div class="vtp-stage">
+          <div class="compare" id="compare">
+            <img class="compare-base" id="cmpBase" src="static/vtp/ep52/kf00.jpg?v=ep52" alt="Raw ego-centric keyframe" />
+            <img class="compare-top-img" id="cmpTop" src="static/vtp/ep52/kf00_vtp.jpg?v=ep52" alt="Keyframe with VTP overlay" />
+            <div class="compare-divider" id="cmpDivider"></div>
+            <div class="compare-handle" id="cmpHandle"><span>&#8596;</span></div>
+            <span class="compare-label label-left">+ VTP</span>
+            <span class="compare-label label-right">no VTP</span>
+          </div>
+        </div>
+
+        <div class="vtp-controls-row">
+          <button class="step-btn" id="vpPrev" aria-label="Previous keyframe">&larr; Prev</button>
+          <span class="vtp-counter" id="vpCounter">Keyframe 1 / 22</span>
+          <button class="step-btn" id="vpNext" aria-label="Next keyframe">Next keyframe &rarr;</button>
+        </div>
+
+        <p class="case-instr">
+          <strong>Generated instruction:</strong>
+          Walk out of the living room and into the kitchen. Turn left and walk into the bathroom. Stop in the doorway to the bathroom.
+        </p>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section id="results" class="section alt">
+    <div class="container">
+      <h2 class="section-title">Main Results</h2>
+      <p class="section-sub">
+        Navigation instruction generation on R2R-CE and RxR-CE <strong>Val Unseen</strong>. VTInstructor sets a
+        new state of the art across all standard NLG metrics.
+      </p>
+
+      <figure class="table-figure">
+        <img src="static/images/table1.png" alt="Table 1: main results on R2R-CE and RxR-CE Val Unseen" loading="lazy" />
+      </figure>
+
+      <figure class="table-figure">
+        <img src="static/images/table2.png?v=2" alt="Table 2: cross-setting comparison with prior instruction generation methods" loading="lazy" />
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== QUALITATIVE ===================== -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Qualitative Comparison</h2>
+      <p class="section-sub">
+        Compressed keyframes with VTP overlays (top) and instructions from the ground truth, the strongest
+        baseline, and VTInstructor. Yellow marks factual errors (wrong turns, hallucinated landmarks).
+      </p>
+      <figure class="qual-figure">
+        <img src="static/images/fig3_qual.png" alt="Qualitative comparison on R2R-CE Val Unseen" loading="lazy" />
+        <figcaption><strong>Figure 3. Qualitative comparison on R2R-CE Val Unseen.</strong></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===================== PRACTICAL UTILITY ===================== -->
+  <section class="section alt">
+    <div class="container">
+      <h2 class="section-title">Practical Utility</h2>
+      <p class="section-sub">
+        Beyond NLG metrics, VTInstructor-generated instructions improve real navigation: they beat human
+        annotations as a frozen follower's guidance, augment training data, and win human preference on
+        real-world videos. Adding VTInstructor-generated instructions to the training set of a frozen
+        CorrectNav follower (LLaVA-Video-7B backbone) improves navigation on both benchmarks &mdash; a
+        consistent gain on top of human data alone.
+      </p>
+
+      <div class="utility-grid">
+        <figure class="table-figure table-figure-main">
+          <img src="static/images/table5.png" alt="Table 5: downstream navigation performance with a frozen CorrectNav follower" loading="lazy" />
+        </figure>
+        <div class="utility-stack">
+          <figure class="table-figure">
+            <img src="static/images/table8.png" alt="Table 8: human evaluation on real-world navigation videos" loading="lazy" />
+          </figure>
+          <figure class="table-figure">
+            <img src="static/images/table6.png" alt="Table 6: augmentation on R2R-CE Val Unseen" loading="lazy" />
+          </figure>
+          <figure class="table-figure">
+            <img src="static/images/table7.png" alt="Table 7: augmentation on RxR-CE Val Unseen" loading="lazy" />
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BIBTEX ===================== -->
+  <section id="bibtex" class="section">
+    <div class="container narrow">
+      <h2 class="section-title">BibTeX</h2>
+      <div class="bibtex-wrap">
+        <button class="copy-btn" id="copyBib">Copy</button>
+        <pre id="bibText">@misc{yang2026vtinstructorvisualtrajectoryprompting,
+      title={VTInstructor: Visual Trajectory Prompting for Navigation Instruction Generation in Continuous Environments},
+      author={Haolin Yang and Yuxing Long and Zihan Yang and Hao Dong},
+      year={2026},
+      eprint={2608.15284},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2608.15284},
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer">
+    <div class="container">
+      <p>
+        Website template adapted from the
+        <a href="https://github.com/nerfies/nerfies.github.io" target="_blank" rel="noopener">Nerfies</a>
+        academic project page. Content licensed under
+        <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.
+      </p>
+      <p class="muted">&copy; 2026 VTInstructor &middot; Accepted to ACM Multimedia 2026.</p>
+    </div>
+  </footer>
+
+  <script src="static/js/index.js?v=ep52c"></script>
+</body>
+</html>

@@ -3,15 +3,15 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2608.15284"><img src="https://img.shields.io/badge/arXiv-2608.15284-b31b1b.svg" alt="arXiv"></a>
   <a href="https://huggingface.co/TidalYang/VTInstructor-8b"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-VTInstructor--8B-ffc107.svg" alt="Hugging Face"></a>
-  <img src="https://img.shields.io/badge/%F0%9F%8C%90%20Project-Coming%20Soon-lightgrey.svg" alt="Project website coming soon">
+  <a href="https://tidalharley.github.io/VTInstructor/"><img src="https://img.shields.io/badge/%F0%9F%8C%90%20Project-Website-0A7B83.svg" alt="Project website"></a>
 </p>
 
 <p align="center">
-  <img src="teaser.png" alt="VTInstructor overview" width="90%"/>
+  <img src="assets/teaser.png" alt="VTInstructor teaser" width="90%"/>
 </p>
 
 <p align="center">
-  <img src="vt-instructor.png" alt="VTInstructor overview" width="90%"/>
+  <img src="assets/vt-instructor.png" alt="VTInstructor overview" width="90%"/>
 </p>
 
 ## Introduction
@@ -45,23 +45,23 @@ Stage 5  Generation     →  instructions for data augmentation (VTP optional)
 - **Fully open-sourced codebase.** All code for rendering, VTP construction, VP-Adapter SFT, VP-GRPO, and evaluation is released in this repository, only DPC in EDTC section is not available yet.
 
 <p align="center">
-  <img src="table1.png" width="88%"/><br/>
+  <img src="assets/tables/table1.png" width="88%"/><br/>
   <sub><b>Table 1.</b> R2R-CE Val Unseen Results</sub>
 </p>
 
 <p align="center">
-  <img src="table2.png" width="88%"/><br/>
+  <img src="assets/tables/table2.png" width="88%"/><br/>
   <sub><b>Table 2.</b> RxR-CE Val Unseen Results</sub>
 </p>
 
 <table align="center" width="88%">
   <tr>
     <td align="center" width="50%">
-      <a href="table3.png"><img src="table3.png" width="100%"/></a>
+      <a href="assets/tables/table3.png"><img src="assets/tables/table3.png" width="100%"/></a>
       <br/><sub><b>Table 3.</b> Downstream VLN task results</sub>
     </td>
     <td align="center" width="50%">
-      <a href="table4.png"><img src="table4.png" width="100%"/></a>
+      <a href="assets/tables/table4.png"><img src="assets/tables/table4.png" width="100%"/></a>
       <br/><sub><b>Table 4.</b> Data augmentation results</sub>
     </td>
   </tr>
@@ -103,6 +103,12 @@ VTInstructor/
 │   ├── pred_example.json       # input schema for evaluate.py
 │   └── R2R_val_unseen.json     # 613 traj × 3 human refs, ground truth for R2RCE valunseen scoring
 ├── environment/                # Exact SFT / GRPO pip freezes
+├── assets/                     # Figures embedded in this README
+│   ├── teaser.png
+│   ├── vt-instructor.png
+│   ├── ACMMM2026.png
+│   └── tables/                 # Tables 1–4
+├── docs/                       # Project page served at https://tidalharley.github.io/VTInstructor/
 ├── ENVIRONMENT.md              # Two-env setup; DeepSpeed 0.14.4 pin
 ├── run_pipeline.sh             # Optional: run stages 1–4 in order
 └── requirements.txt
